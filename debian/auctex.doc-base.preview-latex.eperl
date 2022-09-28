@@ -1,0 +1,28 @@
+<: # ePerl source file :>//
+Document: preview-latex
+Title: preview-latex: WYSIWYG LaTeX editing with Emacs and AUCTeX
+Author: David Kastrup, Alan Shutko, Jan-Åke Larsson and Nick Alcock
+Abstract: preview-latex is a package embedding preview fragments into Emacs
+ source buffers under the AUCTeX editing environment for LaTeX. It uses
+ `preview.sty' for the extraction of certain environments (most notably
+ displayed formulas). Other applications of this style file are possible and
+ exist.
+Section: Editors
+
+Format: info
+Index: /usr/share/info/preview-latex.info.gz
+Files: /usr/share/info/preview-latex.info*
+
+Format: HTML
+Index: /usr/share/doc/auctex/HTML/preview-latex/index.html
+Files: /usr/share/doc/auctex/HTML/preview-latex/*
+<:
+# local variables:
+# mode: text
+# fill-column: 78
+# ispell-local-dictionary: "american"
+# end:
+#
+# LocalWords:  WYSIWYG AUCTeX Kastrup Shutko ke Larsson Alcock texinfo HTML
+# LocalWords:  LaTeX Åke
+:>//

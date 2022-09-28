@@ -1,0 +1,146 @@
+# French translations of the "debian/auctex/templates" file of the auctex
+# Debian package.
+#
+# Copyright (C) 2006, 07, 12 Davide G. M. Salvetti
+#
+# This file is distributed under the same license as the auctex Debian
+# package.
+#
+# Steve Petruzzello <dlist@bluewin.ch>, 2006, 07, 12
+msgid ""
+msgstr ""
+"Project-Id-Version: auctex_11.86-8\n"
+"Report-Msgid-Bugs-To: auctex@packages.debian.org\n"
+"POT-Creation-Date: 2012-01-02 02:04+0100\n"
+"PO-Revision-Date: 2012-01-08 18:38+0100\n"
+"Last-Translator: Steve Petruzzello <dlist@bluewin.ch>\n"
+"Language-Team: French <debian-l10n-french@lists.debian.org>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Country: SWITZERLAND\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-Language: French\n"
+
+#. Type: select
+#. Choices
+#: ../auctex.templates:1001
+msgid "Background"
+msgstr "Arrière-plan"
+
+#. Type: select
+#. Choices
+#: ../auctex.templates:1001
+msgid "Foreground"
+msgstr "Premier plan"
+
+#. Type: select
+#. Choices
+#: ../auctex.templates:1001
+msgid "None"
+msgstr "Aucun"
+
+#. Type: select
+#. Description
+#: ../auctex.templates:1002
+msgid "(La)TeX macros parsing mode:"
+msgstr "Mode d'analyse des macros (La)TeX :"
+
+#. Type: select
+#. Description
+#: ../auctex.templates:1002
+msgid ""
+"To improve the performance of AUCTeX, every currently installed TeX macro "
+"package and LaTeX style file will be parsed."
+msgstr ""
+"Afin d'améliorer les performances d'AUCTeX, tous les paquets de macros TeX "
+"installés ainsi que tous les fichiers de style de LaTeX seront analysés."
+
+#. Type: select
+#. Description
+#. Translators: do NOT translate ${LOGFILE}
+#: ../auctex.templates:1002
+msgid ""
+"This may take a lot of time, so it should probably be done in the "
+"background.  You may also choose to have it done in the foreground, or to "
+"skip that step."
+msgstr "Cela risque de prendre beaucoup de temps, il est donc préférable de le faire en arrière-plan. Toutefois, vous pouvez aussi choisir de le faire au premier plan ou encore sauter complètement cette étape."
+
+#. Type: select
+#. Description
+#: ../auctex.templates:1002
+msgid ""
+"The cached data gets automatically updated via dpkg triggers, so that no "
+"specific action is required whenever you install new (La)TeX packages or "
+"remove old ones."
+msgstr ""
+"Les données en cache sont automatiquement mises à jour à l'aide des actions "
+"différées (« triggers ») de dpkg. Ainsi aucune action spécifique n'est "
+"nécessaire quand vous installez de nouveaux paquets (La)TeX ou lorsque vous "
+"en supprimerez des anciens."
+
+#. Type: select
+#. Description
+#: ../auctex.templates:1002
+msgid ""
+"This update can be run manually at any moment by running 'update-auctex-"
+"elisp'."
+msgstr ""
+"Vous pouvez à tout moment les mettre à jour vous-même en exécutant la "
+"commande « update-auctex-elisp »."
+
+#~ msgid "Console"
+#~ msgstr "Console"
+
+#~ msgid "File"
+#~ msgstr "Fichier"
+
+#~ msgid "Parsing output destination:"
+#~ msgstr "Analyse de la destination de sortie :"
+
+#~ msgid ""
+#~ "You chose to parse TeX macro packages and LaTeX style files in "
+#~ "foreground. This operation generates a lot of information. Please choose "
+#~ "where this information should be sent:"
+#~ msgstr ""
+#~ "Vous avez décidé d'analyser les paquets de macros TeX ainsi que les "
+#~ "fichiers style de LaTeX au premier plan. Ce processus génère beaucoup de "
+#~ "texte en sortie. Veuillez choisir où cette information doit être envoyée :"
+
+#~ msgid ""
+#~ "  Console: output goes to the current console;\n"
+#~ "  File:    output goes to ${LOGFILE}."
+#~ msgstr ""
+#~ "  Console : sortie dirigée vers la console courante ;\n"
+#~ "  Fichier : sortie dirigée vers ${LOGFILE}."
+
+#~ msgid ""
+#~ "By default -- i.e., answering File to this question -- further output "
+#~ "from the parsing process will go to a file named: ${LOGFILE}."
+#~ msgstr ""
+#~ "Le choix par défaut (i.e., répondre Fichier) implique que la sortie du "
+#~ "processus d'analyse est dirigée dans un fichier nommé ${LOGFILE}. "
+
+#~ msgid ""
+#~ "If you answer Console, you will see all of the (boring) output right on "
+#~ "your terminal."
+#~ msgstr ""
+#~ "En répondant Console, vous verrez la sortie (ennuyeuse) s'afficher sur "
+#~ "votre terminal."
+
+#~ msgid "The autoload mechanism of AUCTeX has changed"
+#~ msgstr "Le mécanisme de chargement automatique d'AUCTeX a changé"
+
+#~ msgid ""
+#~ "Since Debian version 11.81-1, AUCTeX gets autoloaded by default.  Users "
+#~ "who do not want AUCTeX to override the standard Emacs TeX-mode may unload "
+#~ "AUCTeX completely by evaluating the form \"(unload-feature 'tex-"
+#~ "site)\" (i.e., let them put that string into their personal \"~/.emacs\" "
+#~ "or \"~/.emacs.el\" file to disable AUCTeX completely)."
+#~ msgstr ""
+#~ "Depuis la version Debian 11.81-1, AUCTeX est par défaut chargé "
+#~ "automatiquement. Les utilisateurs qui ne désirent pas qu'AUCTeX ait la "
+#~ "priorité sur le mode standard Tex d'Emacs peuvent décharger complètement "
+#~ "AUCTeX en insérant « (unload-feature 'tex-site) » dans leur fichier "
+#~ "personnel ~/.emacs ou ~/.emacs.el. "

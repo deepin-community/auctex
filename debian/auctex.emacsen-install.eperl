@@ -1,0 +1,127 @@
+<: # ePerl source file :>//
+#! /bin/bash
+#
+# elisp Emacs install script for the Debian auctex package
+#
+<:
+  open (my $copyright, "< COPYRIGHT");
+  while (<$copyright>) {print '#' . (/^$/ ? "\n" : " $_")};
+  close $copyright;
+:>//
+
+set -e
+
+PROGNAME='auctex/install'
+
+<: # getopt comes from util-linux, which is Essential :>//
+GETOPT=$(getopt -o 'd' --long 'debug' -- "${@}")
+if [ ${?} != 0 ]; then
+    echo >&2 "${PROGNAME}:" 'getopt error'
+    exit 1
+fi
+eval set -- "${GETOPT}"
+unset GETOPT
+
+prefix=""
+
+while true; do
+    case "$1" in
+<:      # debug option for use by auctex maintainer only :>//
+	(--debug|-d)
+	    prefix=$(pwd)
+	    shift
+	    ;;
+	(--)
+	    shift
+	    break
+	    ;;
+	(*)
+	    echo >&2 "${PROGNAME}:" \
+		"Internal error: unhandled option: $1"
+	    exit 1;;
+    esac
+done
+
+FLAVOR=${1}
+
+do_install () {
+    local FLAVOR=${1}
+    local srcdir=${prefix}/usr/share/auctex
+    local objdir=${prefix}/usr/share/${FLAVOR}/site-lisp/auctex
+    local ELCC="/usr/bin/${FLAVOR} --batch --no-site-file --no-init-file"
+    local LOGFILE=${objdir}/CompilationLog
+    echo -n "${PROGNAME}:" \
+	"Byte-compiling for Emacs flavor ${FLAVOR}" \
+	"(log to ${LOGFILE})..."
+    rm --recursive --force ${objdir}
+    install --owner root --group root --mode 755 --directory ${objdir}
+    install --owner root --group root --mode 755 --directory ${objdir}/style
+    exec {stdout}>&1 {stderr}>&2 &>${LOGFILE}
+    pushd ${srcdir}
+    umask 0022
+    touch ${objdir}/.nosearch
+    for target in *.el images; do
+	ln --symbolic --verbose ../../../auctex/${target} \
+	    ${objdir}/${target}
+    done
+    touch ${objdir}/style/.nosearch
+    for target in style/*.el; do
+	ln --symbolic --verbose ../../../../auctex/${target} \
+	    ${objdir}/${target}
+    done
+    popd
+    pushd ${objdir}
+    INITFILE=$(mktemp ./XXXXXXXX-el)
+    cat <<EOF >${INITFILE}
+(push "." load-path)
+(setq byte-compile-warnings nil
+      TeX-lisp-directory "<none>"
+      TeX-auto-global "<none>")
+EOF
+    EXIT_STATUS=0
+    ${ELCC} --load ${INITFILE} --funcall batch-byte-compile *.el style/*.el \
+	|| EXIT_STATUS=$?
+    rm --force ${INITFILE}
+<:  # no need to keep these sources :>//
+    rm --force ${objdir}/style/*.el
+    exec 1>&${stdout} 2>&${stderr}
+    if [ ${EXIT_STATUS} -gt 0 ]; then
+	echo -e ' failed.\n<LOGFILE>'
+	cat ${LOGFILE}
+	echo '</LOGFILE>'
+	exit ${EXIT_STATUS}
+    else
+	echo ' done.'
+    fi
+    gzip --best ${LOGFILE}
+    return 0
+}
+
+function do_update_auctex_elisp () {
+<:  # let auctex postinst call update_auctex_elisp, via triggers
+    # option --by-package is needed to let dpkg-reconfigure work :>//
+    dpkg-trigger --by-package=auctex auctex-install-${FLAVOR}
+    return 0
+}
+
+case "${FLAVOR}" in
+    (emacs)
+	do_install ${FLAVOR}
+	do_update_auctex_elisp ${FLAVOR}
+	;;
+    (*)
+	echo "${PROGNAME}:" \
+	    "Ignoring unsupported Emacs flavor: ${FLAVOR}"
+	;;
+esac
+
+exit 0
+<:
+# local variables:
+# mode: shell-script
+# ispell-local-dictionary: "american"
+# ispell-check-comments: exclusive
+# end:
+#
+# LocalWords:  ePerl elisp auctex getopt util linux postinst
+:>//

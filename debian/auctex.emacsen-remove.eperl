@@ -1,0 +1,75 @@
+<: # ePerl source file :>//
+#! /bin/bash
+#
+# elisp Emacs remove script for the auctex Debian package
+#
+<:
+  open (my $copyright, "< COPYRIGHT");
+  while (<$copyright>) {print '#' . (/^$/ ? "\n" : " $_")};
+  close $copyright;
+:>//
+
+set -e
+
+PROGNAME='auctex/remove'
+
+FLAVOR=${1}
+
+undo_install () {
+    echo -n "${PROGNAME}:" \
+	"Removing installed files for ${FLAVOR}..."
+    rm --force /usr/share/${FLAVOR}/site-lisp/auctex/CompilationLog{,.gz}
+    rm --force /usr/share/${FLAVOR}/site-lisp/auctex/style/*.elc
+    rm --force /usr/share/${FLAVOR}/site-lisp/auctex/style/.nosearch
+    rm --force /usr/share/${FLAVOR}/site-lisp/auctex/images
+    rm --force /usr/share/${FLAVOR}/site-lisp/auctex/*.elc
+    rm --force /usr/share/${FLAVOR}/site-lisp/auctex/*.el
+    rm --force /usr/share/${FLAVOR}/site-lisp/auctex/.nosearch
+    test -d /usr/share/${FLAVOR}/site-lisp/auctex/style \
+	&& rmdir --ignore-fail-on-non-empty \
+	/usr/share/${FLAVOR}/site-lisp/auctex/style
+    test -d /usr/share/${FLAVOR}/site-lisp/auctex \
+	&& rmdir --ignore-fail-on-non-empty \
+	/usr/share/${FLAVOR}/site-lisp/auctex
+    echo ' done.'
+    return 0
+}
+
+undo_update_auctex_elisp () {
+    <: # Take care of running update-auctex-elisp instances :>//
+    while pgrep -f update-auctex-elisp >/dev/null; do
+	echo -n "${PROGNAME}:" \
+	     "Killing $(pgrep -fc update-auctex-elisp) running" \
+	     "update-auctex-elisp instance(s)..."
+	pkill -f update-auctex-elisp || true
+	sleep 1
+	echo 'done.'
+    done
+    echo -n "${PROGNAME}:" \
+	"Removing parsed (La)TeX macros for ${FLAVOR}..."
+    rm --recursive --force /var/lib/auctex/${FLAVOR}
+    echo ' done.'
+    return 0
+}
+
+case "${FLAVOR}" in
+    (emacs)
+	undo_update_auctex_elisp
+	undo_install
+	;;
+    (*)
+	echo "${PROGNAME}:" \
+	    "Ignoring unsupported Emacs flavor: ${FLAVOR}"
+	;;
+esac
+
+exit 0
+<:
+# local variables:
+# mode: shell-script
+# ispell-local-dictionary: "american"
+# ispell-check-comments: exclusive
+# end:
+#
+# LocalWords:  ePerl elisp auctex
+:>//

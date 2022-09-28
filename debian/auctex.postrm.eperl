@@ -1,0 +1,38 @@
+<: # ePerl source file :>//
+#! /bin/bash
+#
+# postrm script for the Debian auctex package
+#
+<:
+  open (my $copyright, "< COPYRIGHT");
+  while (<$copyright>) {print '#' . (/^$/ ? "\n" : " $_")};
+  close $copyright;
+:>//
+
+set -e
+
+<: # BEGIN: Cleanup old cruft :>//
+<:  # obsolete emacs21, emacs22 and emacs-snapshot conffiles :>//
+for f in 21 22 23 -snapshot; do
+    dpkg-maintscript-helper rm_conffile \
+	/etc/emacs${f}/site-start.d/50auctex.el \
+	11.86-12~ auctex -- "${@}"
+done
+<:  # obsolete cron conffile :>//
+dpkg-maintscript-helper rm_conffile \
+    /etc/cron.weekly/auctex \
+    11.86-12~ auctex -- "${@}"
+<: # END: Cleanup old cruft :>//
+
+#DEBHELPER#
+
+exit 0
+<:
+# local variables:
+# mode: shell-script
+# ispell-local-dictionary: "american"
+# ispell-check-comments: exclusive
+# end:
+#
+# LocalWords:  postrm auctex conffiles ePerl emacs conffile
+:>//

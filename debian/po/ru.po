@@ -1,0 +1,114 @@
+# Russian translation of the "debian/auctex/templates" file of the auctex
+# Debian package.
+#
+# Copyright (C) 2007, 11, 12 Davide G. M. Salvetti
+#
+# This file is distributed under the same license as the auctex Debian
+# package.
+#
+# Yuri Kozlov <yuray@komyakino.ru>, 2007, 11.
+msgid ""
+msgstr ""
+"Project-Id-Version: auctex 11.86-8\n"
+"Report-Msgid-Bugs-To: auctex@packages.debian.org\n"
+"POT-Creation-Date: 2012-01-02 02:04+0100\n"
+"PO-Revision-Date: 2012-01-08 18:39+0100\n"
+"Last-Translator: Yuri Kozlov <yuray@komyakino.ru>\n"
+"Language-Team: Russian <debian-l10n-russian@lists.debian.org>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Lokalize 1.0\n"
+"Plural-Forms:  nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#. Type: select
+#. Choices
+#: ../auctex.templates:1001
+msgid "Background"
+msgstr "фоновый"
+
+#. Type: select
+#. Choices
+#: ../auctex.templates:1001
+msgid "Foreground"
+msgstr "оперативный"
+
+#. Type: select
+#. Choices
+#: ../auctex.templates:1001
+msgid "None"
+msgstr "не выполнять"
+
+#. Type: select
+#. Description
+#: ../auctex.templates:1002
+msgid "(La)TeX macros parsing mode:"
+msgstr "Режим анализа макросов (La)TeX:"
+
+#. Type: select
+#. Description
+#: ../auctex.templates:1002
+msgid ""
+"To improve the performance of AUCTeX, every currently installed TeX macro "
+"package and LaTeX style file will be parsed."
+msgstr ""
+"Для увеличения производительности AUCTeX, каждый уже установленный "
+"макропакет TeX и файл стилей LaTeX будет проанализирован."
+
+#. Type: select
+#. Description
+#. Translators: do NOT translate ${LOGFILE}
+#: ../auctex.templates:1002
+msgid ""
+"This may take a lot of time, so it should probably be done in the "
+"background.  You may also choose to have it done in the foreground, or to "
+"skip that step."
+msgstr "Это может занять много времени, поэтому, вероятно, должно выполняться в фоновом режиме. Также, вы можете выполнять это в оперативном режиме, или вообще не выполнять анализ."
+
+#. Type: select
+#. Description
+#: ../auctex.templates:1002
+msgid ""
+"The cached data gets automatically updated via dpkg triggers, so that no "
+"specific action is required whenever you install new (La)TeX packages or "
+"remove old ones."
+msgstr ""
+"Кешируемые данные обновляются автоматически с помощью механизма триггеров "
+"dpkg, поэтому вам не нужно что-либо делать при установке новых пакетов (La)"
+"TeX или удалении старых."
+
+#. Type: select
+#. Description
+#: ../auctex.templates:1002
+msgid ""
+"This update can be run manually at any moment by running 'update-auctex-"
+"elisp'."
+msgstr ""
+"Данное обновление может быть выполнено вручную в любой момент по команде "
+"'update-auctex-elisp'."
+
+#~ msgid "Console"
+#~ msgstr "на консоль"
+
+#~ msgid "File"
+#~ msgstr "в файл"
+
+#~ msgid "Parsing output destination:"
+#~ msgstr "Место вывода результатов анализа:"
+
+#~ msgid ""
+#~ "You chose to parse TeX macro packages and LaTeX style files in "
+#~ "foreground. This operation generates a lot of information. Please choose "
+#~ "where this information should be sent:"
+#~ msgstr ""
+#~ "Вы выбрали анализ макропакетов TeX и файлов стилей LaTeX в оперативном "
+#~ "режиме. Эта операция генерирует много информации. Выберите куда она "
+#~ "должна посылаться:"
+
+#~ msgid ""
+#~ "  Console: output goes to the current console;\n"
+#~ "  File:    output goes to ${LOGFILE}."
+#~ msgstr ""
+#~ "  на консоль: выводить на текущую консоль;\n"
+#~ "  в файл:     сохранять в файл ${LOGFILE}."

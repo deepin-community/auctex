@@ -1,0 +1,174 @@
+<: # ePerl source file :>//
+#! /usr/bin/make -f
+#
+# makefile rules for the Debian package auctex
+#
+<:
+  open (my $copyright, "< COPYRIGHT");
+  while (<$copyright>) {print '#' . (/^$/ ? "\n" : " $_")};
+  close $copyright;
+:>//
+
+include /usr/share/dpkg/pkg-info.mk
+
+SHELL := /bin/bash
+SBUILD := sbuild --verbose
+
+EPERL_SRC := $(wildcard debian/*.eperl)
+EPERL_OBJ := $(EPERL_SRC:%.eperl=%)
+
+debian/clean: $(EPERL_OBJ)
+	echo $(filter-out debian/copyright debian/rules \
+		debian/auctex.templates, $(EPERL_OBJ)) \
+		debian/auctex.templates.dcobj \
+		debian/clean > debian/clean
+
+<: # ePerl is simply great: thanks, Ralf! :>//
+%:: %.eperl
+	eperl -P -o $@ $<
+
+%:
+	dh $@ --exclude .eperl --with tex
+
+.PHONY: override_dh_auto_configure
+override_dh_auto_configure: debian/clean
+	./autogen.sh
+	dh_auto_configure
+
+<: # Debian Emacs policy requires to byte-compile at installation time;
+   # debian/elcc simulates Emacs byte compilation touching empty elcs. :>//
+ELCC := $(shell pwd)/debian/elcc
+.PHONY: override_dh_auto_build
+override_dh_auto_build: debian/clean
+	chmod -R a+rX debian/
+	chmod a+x debian/elcc
+	$(MAKE) ELCC=$(ELCC)
+<: #    auto-loads.el needs to be byte-compiled for real :>//
+	rm --force auto-loads.el
+	$(MAKE) auto-loads.el
+<: #    tex-site.el depends on auto-loads.el :>//
+	$(MAKE) tex-site.el
+	cd doc && $(MAKE) auctex.htmls/index.html
+	cd doc && $(MAKE) preview-latex.htmls/index.html
+
+<: # There are no working tests at this moment :>//
+.PHONY: override_dh_auto_test
+override_dh_auto_test:
+
+.PHONY: override_dh_install
+override_dh_install:
+<:      # Remove fake elcs :>//
+	find debian/tmp/usr/share/emacs/site-lisp -type f -name \*.elc \
+		-print0 | xargs --null --no-run-if-empty rm -f
+	mv --verbose debian/tmp/usr/share/emacs/site-lisp/auctex \
+		debian/tmp/usr/share/
+	dh_install
+
+.PHONY: override_dh_installchangelogs
+override_dh_installchangelogs:
+	dh_installchangelogs --exclude CHANGES
+
+.PHONY: override_dh_compress
+override_dh_compress:
+	dh_compress --exclude=.pdf
+
+.PHONY: override_dh_installdocs
+override_dh_installdocs:
+	install -m 755 -d debian/tmp/usr/doc/auctex/src
+	install -m 644 doc/tex-ref.pdf debian/tmp/usr/doc/auctex
+	install -m 644 doc/*.tex{,i} debian/tmp/usr/doc/auctex/src
+	install -m 644 etc/auctex-logo.tex debian/tmp/usr/doc/auctex/src
+	install -m 755 -d \
+		debian/tmp/usr/doc/auctex/HTML/{auctex,preview-latex}
+	install -m 644 doc/auctex.htmls/* \
+		debian/tmp/usr/doc/auctex/HTML/auctex
+	install -m 644 doc/preview-latex.htmls/* \
+		debian/tmp/usr/doc/auctex/HTML/preview-latex
+	dh_installdocs
+
+.PHONY: override_dh_installtex
+override_dh_installtex:
+	dh_installtex --package=preview-latex-style
+
+debian/po/templates.pot: debian/auctex.templates debian/po/*.po
+	umask 0022 && debconf-updatepo --verbose --podir=debian/po
+	@touch $@
+
+%.dcobj: % debian/po/templates.pot
+	po2debconf --verbose --podir debian/po $< > $@
+
+<: # <% rm -f ~/.debconf.d/* && debian/rules debconf-test %> :>//
+.PHONY: debconf-test
+debconf-test: debian/auctex.templates.dcobj debian/auctex.config
+	debconf-loadtemplate auctex \
+		debian/auctex.templates.dcobj
+	DEBCONF_DEBUG=developer debconf --owner=auctex \
+		--frontend=dialog --priority=low \
+		$(SHELL) -e debian/auctex.config configure
+
+.PHONY: debconf-ask-for-translations
+debconf-ask-for-translations: debian/auctex.templates.dcobj
+	podebconf-report-po --verbose --gzip \
+		 --call --withtranslators --languageteam \
+		--package=auctex --deadline='+7days' \
+		--from='"Davide G. M. Salvetti (Debian auctex maintainer)" <salve@debian.org>' \
+		--postpone=../+RFT.mbox
+
+.PHONY: vcs-switch
+vcs-switch:
+	git checkout vcs/debian
+
+.PHONY: vcs-import
+vcs-import: D := $(shell date --utc +%Y%m%d%H%M)
+vcs-import: V := "$(DEB_VERSION_UPSTREAM)+vcs.$(D)"
+vcs-import: vcs-switch
+	git archive --verbose --worktree-attributes \
+		--prefix="auctex-$(V)/" \
+		--output="../auctex_$(V).orig.tar.gz" \
+		vcs/upstream/git
+	gbp import-orig --verbose \
+		--upstream-branch=vcs/upstream/snapshot \
+		--debian-branch=vcs/debian \
+		"../auctex_$(V).orig.tar.gz"
+	rm --force "../auctex_$(V).orig.tar.gz"
+
+.PHONY: snapshot
+snapshot: OBJ := --arch-all
+snapshot: DIST := unstable
+snapshot: BRANCH := $(shell git branch | perl -ne 'print if s/^\* //')
+snapshot: LAST := $(shell git describe --abbrev=0 --match 'debian/*' master)
+snapshot: clean
+	git clean -ix
+	gbp dch --debian-branch=$(BRANCH) --snapshot --since $(LAST) --commit
+	gbp buildpackage --keyid='' \
+		--git-no-pristine-tar \
+		--git-builder='$(SBUILD) $(OBJ) --dist=$(DIST)' \
+		--git-debian-branch=$(BRANCH)
+
+.PHONY: release
+release: OBJ := --arch-all --arch-any --source --source-only-changes
+release: DIST := unstable
+release: clean
+	git clean -ix
+	git checkout master
+	gbp pq rebase
+	gbp pq export
+	gbp dch --release --commit
+	gbp buildpackage \
+		--git-no-pristine-tar \
+		--git-pristine-tar-commit \
+		--git-builder='$(SBUILD) $(OBJ) --dist=$(DIST)' \
+		--git-tag
+
+.PHONY: upload
+upload:
+	dput ../auctex_$(DEB_VERSION)_source.changes
+<:
+# local variables:
+# mode: makefile-gmake
+# ispell-local-dictionary: "american"
+# ispell-check-comments: exclusive
+# end:
+#
+# LocalWords:  ePerl Ralf makefile auctex
+:>//

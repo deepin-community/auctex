@@ -1,0 +1,47 @@
+<: # ePerl source file :>//
+# templates for the Debian auctex package
+#
+<:
+# These templates have been reviewed by the debian-l10n-english team.
+#
+# If modifications/additions/rewording are needed, please ask
+# debian-l10n-english@lists.debian.org for advice.
+#
+# Even minor modifications require translation updates and such
+# changes should be coordinated with translators and reviewers.
+
+  open (my $copyright, "< COPYRIGHT");
+  while (<$copyright>) {print '#' . (/^$/ ? "\n" : " $_")};
+  close $copyright;
+:>//
+Template: auctex/doauto
+Type: select
+__Choices: Background, Foreground, None
+Default: Background
+#flag:comment:3
+# Translators: do NOT translate ${LOGFILE}
+_Description: (La)TeX macros parsing mode:
+ To improve the performance of AUCTeX, every currently installed TeX macro
+ package and LaTeX style file will be parsed.
+ .
+ This may take a lot of time, so it should probably be done in the
+ background.  You may also choose to have it done in the foreground, or to
+ skip that step.
+ .
+ The cached data gets automatically updated via dpkg triggers, so that
+ no specific action is required whenever you install new (La)TeX packages or
+ remove old ones.
+ .
+ This update can be run manually at any moment by running
+ 'update-auctex-elisp'.
+
+<:
+# local variables:
+# mode: text
+# fill-column: 76
+# ispell-local-dictionary: "american"
+# end:
+#
+# LocalWords:  defaultchanged autoload AUCTeX autoloaded tex doauto LOGFILE
+# LocalWords:  doautofg auctex elisp emacs LaTeX dpkg
+:>//

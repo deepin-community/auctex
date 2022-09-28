@@ -1,0 +1,34 @@
+<: # ePerl source file :>//
+#! /bin/bash
+#
+# config script for the Debian auctex package
+#
+<:
+  open (my $copyright, "< COPYRIGHT");
+  while (<$copyright>) {print '#' . (/^$/ ? "\n" : " $_")};
+  close $copyright;
+:>//
+
+set -e
+
+source /usr/share/debconf/confmodule
+
+case "${1}" in
+    (configure|reconfigure)
+	db_input low auctex/doauto || true
+	db_go || true
+	;;
+esac
+
+#DEBHELPER#
+
+exit 0
+<:
+# local variables:
+# mode: shell-script
+# ispell-local-dictionary: "american"
+# ispell-check-comments: exclusive
+# end:
+#
+# LocalWords:  config auctex ePerl
+:>//

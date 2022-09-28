@@ -1,0 +1,15 @@
+<: # ePerl source file :>//
+# lintian override file for the Debian auctex package
+
+# Needed to build alternative formats of the manual from sources
+auctex binary: extra-license-file usr/share/doc/auctex/src/copying.texi
+
+<:
+# local variables:
+# mode: conf
+# ispell-local-dictionary: "american"
+# ispell-check-comments: exclusive
+# end:
+#
+# LocalWords:  ePerl lintian auctex
+:>//

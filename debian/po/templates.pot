@@ -1,0 +1,77 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: auctex@packages.debian.org\n"
+"POT-Creation-Date: 2012-01-02 02:04+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Type: select
+#. Choices
+#: ../auctex.templates:1001
+msgid "Background"
+msgstr ""
+
+#. Type: select
+#. Choices
+#: ../auctex.templates:1001
+msgid "Foreground"
+msgstr ""
+
+#. Type: select
+#. Choices
+#: ../auctex.templates:1001
+msgid "None"
+msgstr ""
+
+#. Type: select
+#. Description
+#: ../auctex.templates:1002
+msgid "(La)TeX macros parsing mode:"
+msgstr ""
+
+#. Type: select
+#. Description
+#: ../auctex.templates:1002
+msgid ""
+"To improve the performance of AUCTeX, every currently installed TeX macro "
+"package and LaTeX style file will be parsed."
+msgstr ""
+
+#. Type: select
+#. Description
+#. Translators: do NOT translate ${LOGFILE}
+#: ../auctex.templates:1002
+msgid ""
+"This may take a lot of time, so it should probably be done in the "
+"background.  You may also choose to have it done in the foreground, or to "
+"skip that step."
+msgstr ""
+
+#. Type: select
+#. Description
+#: ../auctex.templates:1002
+msgid ""
+"The cached data gets automatically updated via dpkg triggers, so that no "
+"specific action is required whenever you install new (La)TeX packages or "
+"remove old ones."
+msgstr ""
+
+#. Type: select
+#. Description
+#: ../auctex.templates:1002
+msgid ""
+"This update can be run manually at any moment by running 'update-auctex-"
+"elisp'."
+msgstr ""

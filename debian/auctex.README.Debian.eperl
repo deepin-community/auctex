@@ -1,0 +1,114 @@
+<: # ePerl source file :>//
+The Debian package auctex
+-------------------------
+
+
+Autoloading
+===========
+
+AUCTeX gets auto-loaded by default.  If you do not want AUCTeX to override
+some of the original Emacs TeX related modes, you might want to customize the
+TeX-modes variable.  You may also unload AUCTeX by evaluating the form
+"(unload-feature 'tex-site)" (i.e., put that string into your "~/.emacs" to
+completely disable AUCTeX, as if it was never loaded).
+
+
+RefTeX
+======
+
+AUCTeX users will probably want to switch the very useful RefTeX package on,
+by adding something like "(add-hook 'LaTeX-mode-hook 'turn-on-reftex)" to
+their "~/.emacs" (see the RefTeX info manual for more information on RefTeX,
+which is part of GNU Emacs).
+
+
+Font-LaTeX
+==========
+
+Starting with AUCTeX 11.01, a new user customizable variable appeared:
+"TeX-install-font-lock".  Font-LaTeX it's now the default choice, so users
+need not doing anything special to load it anymore.  Emacs 21 users may choose
+"tex-font" instead, should they wish it.
+
+
+Using dvipng with preview-latex
+===============================
+
+Since Debian version 11.86-9, preview-latex will use dvipng by default if
+installed.  Users wishing to switch back to Dvips plus Ghostscript might want
+to customize the variable preview-image-type.
+Read /usr/share/doc/auctex/README.gz for more information.
+
+
+Reverse search: using source specials rather than SyncTeX
+=========================================================
+
+When TeX-Source-Correlate mode is enabled, to allow viewers to do reverse
+search AUCTeX uses SyncTeX by default, rather than source specials, if the
+underlying TeX system supports it (as it does with TeX Live on Debian).
+However, xdvik currently supports only source specials, resulting in missing
+reverse search functionality and the warning "No source specials in this DVI
+file - couldn't do reverse search".  Users wishing to let AUCTeX use source
+specials instead of SyncTeX might want to customize the variable
+TeX-source-correlate-method.
+
+
+On line Documentation
+=====================
+
+On line documentation may be found in the info or HTML manual, and in the
+update-auctex-elisp(8) manual page.
+
+TeXInfo sources may be found in the "/usr/share/doc/auctex/src" directory.
+
+
+Notes to System Administrators
+==============================
+
+A) To improve its performance AUCTeX stores information about TeX macros and
+LaTeX styles available on the system in the "/var/lib/auctex" directory.
+
+AUCTeX updates this information automatically, via dpkg triggers;
+nevertheless, you may want to run "update-auctex-elisp" manually after
+installing new style files under "/usr/local/share/texmf".
+
+B) You may probably want to customize the list of printers available at your
+site.  This could be easily accomplished by declaring it in
+"/etc/emacs/site-start.el" (along with the default printer), for example:
+
+(setq TeX-printer-list
+      '(("lp" "dvips -f %s | lpr -P %p" "lpq -P %p")
+        ("lpc" "dvips -f %s | lpr -P %p" "lpq -P %p")
+        ("lpf" "dvips -f %s | lpr -P %p" "lpq -P %p")
+        ("lpt" "dvips -f %s | lpr -P %p" "lpq -P %p"))
+      TeX-printer-default "lpf")
+
+Please, look at the on line documentation, type `C-h v TeX-printer-list RET'
+from within Emacs (load AUCTeX first), or browse through the file
+"/usr/share/emacs/site-lisp/auctex/tex.el" for more information on this topic.
+
+
+Contributed Files
+=================
+
+There is a file that is not part of AUCTeX proper, but is included in the
+distribution in case it proves useful:
+
+    - `bib-cite.el': better support for bibliographies and much more;
+
+Read the comments at the start of that file for more information about how to
+load it, what does it do, and who wrote and maintains it.
+
+
+-- Davide G. M. Salvetti <salve@debian.org>
+<:
+# local variables:
+# mode: text
+# fill-column: 78
+# ispell-local-dictionary: "american"
+# end:
+#
+# LocalWords:  auctex RefTeX AUCTeX LaTeX reftex emacs tex elisp TeXInfo dpkg
+# LocalWords:  setq lp dvips lpr lpq lpc lpf lpt RET el jp fptex fpTeX dvipng
+# LocalWords:  Autoloading Ghostscript SyncTeX xdvik DVI
+:>//

@@ -1,0 +1,78 @@
+.\" Man page for update-auctex-elisp
+.\"
+<:
+  open (my $copyright, "< COPYRIGHT");
+  while (<$copyright>) {print '.\"' . (/^$/ ? "\n" : " $_")};
+  close $copyright;
+:>//
+.\"
+.TH Update\-AUCTeX\-elisp 8 "1998-02-17" "Debian Project" "Debian GNU/Linux Manual"
+.SH NAME
+update\-auctex\-elisp \- Update AUCTeX automatically generated TeX macros and
+LaTeX styles data
+.SH SYNOPSIS
+.SY update\-auctex\-elisp
+.OP \-\-daemon
+.OP \-\-no\-act
+.RI [ FLAVOR
+.IR .\|.\|. ]
+.YS
+.SH DESCRIPTION
+The
+.B update\-auctex\-elisp
+script updates the automatically generated TeX and LaTeX data used by
+AUCTeX and stored in
+.B /var/lib/auctex/<FLAVOR>,
+where
+.I <FLAVOR>
+stands for any valid installed Emacs flavor.
+.PP
+It is called automatically by the Debian auctex package (via dpkg triggers)
+whenever new (La)TeX macros and style files are installed in the TeX and
+METAFONT system trees; beside, it is called on GNU AUCTeX and GNU Emacs flavor
+upgrades and installations, to ensure up to date parsing.  It may and should
+also be called manually after additions to the local TeX and METAFONT system
+tree.
+.PP
+If no arguments are specified,
+.B update\-auctex\-elisp
+caters to every supported GNU Emacs flavor installed on the system; else it
+updates only the specified flavors, if they are installed.
+.SH OPTIONS
+.B --daemon
+.RS
+Detach from the terminal and run in the background.
+.RE
+.B --no-act
+.RS
+Describe what would be done without doing nothing.
+.RE
+.SH EXIT STATUS
+The
+.B update-auctex-elisp
+command returns 0 on success and a positive integer on errors.
+.SH FILES
+.B /var/lib/auctex:
+the hierarchy containing the byte-compiled files.
+.SH BUGS
+None known.
+.SH SEE ALSO
+.BR emacs (1),
+.BR tex (1),
+.BR latex (1).
+.SH UNRESTRICTIONS
+This program is copylefted.  Refer to the GNU General Public License for
+conditions of use.
+.SH AUTHOR
+This program has been written and is actively maintained by Davide
+G. M. Salvetti <salve@debian.org> for the Debian GNU/Linux operating system.
+<:
+# local variables:
+# mode: nroff
+# fill-column: 78
+# ispell-local-dictionary: "american"
+# end:
+#
+# LocalWords:  auctex elisp GPL AUCTeX varauc tex var nroff LaTeX emacs dpkg
+# LocalWords:  METAFONT UNRESTRICTIONS
+:>//
