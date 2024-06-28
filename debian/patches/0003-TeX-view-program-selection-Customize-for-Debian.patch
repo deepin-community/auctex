@@ -12,10 +12,10 @@ Forwarded: not-needed
  1 file changed, 5 insertions(+), 3 deletions(-)
 
 diff --git a/tex.el b/tex.el
-index 95448d8..0c2b180 100644
+index 9328c52..eae884c 100644
 --- a/tex.el
 +++ b/tex.el
-@@ -1394,10 +1394,12 @@ restarting Emacs."
+@@ -1396,10 +1396,12 @@ restarting Emacs."
        (output-pdf "open")
        (output-html "open")))
     (t

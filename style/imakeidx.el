@@ -1,6 +1,6 @@
-;;; imakeidx.el --- AUCTeX style for `imakeidx.sty'.
+;;; imakeidx.el --- AUCTeX style for `imakeidx.sty'.  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2012-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2022 Free Software Foundation, Inc.
 
 ;; Maintainer: auctex-devel@gnu.org
 ;; Author: Mosè Giordano <giordano.mose@libero.it>
@@ -28,6 +28,14 @@
 ;; This file adds support for `imakeidx.sty'.
 
 ;;; Code:
+
+;; Silence the compiler:
+(declare-function font-latex-add-keywords
+                  "font-latex"
+                  (keywords class))
+
+(require 'tex)
+(require 'latex)
 
 (defvar LaTeX-imakeidx-makeindex-options
   '(("name")
@@ -57,12 +65,12 @@
    ;; if `imakeidx' is loaded after `fancyhdr'.
    (unless (member "fancyhdr" TeX-active-styles)
      (setq LaTeX-imakeidx-indexsetup-options
-	   (append LaTeX-imakeidx-indexsetup-options
-		   `(("firstpagestyle" ,(LaTeX-pagestyle-list)))
-		   '(("headers")))))
+           (append LaTeX-imakeidx-indexsetup-options
+                   `(("firstpagestyle" ,(LaTeX-pagestyle-list)))
+                   '(("headers")))))
 
    (TeX-add-symbols
-    '("makeindex" [ (TeX-arg-key-val LaTeX-imakeidx-makeindex-options) ])
+    '("makeindex" [TeX-arg-key-val LaTeX-imakeidx-makeindex-options])
     '("indexsetup" (TeX-arg-key-val LaTeX-imakeidx-indexsetup-options))
     '("splitindexoptions" "Command line option")
     '("index" [ "Index name" ] TeX-arg-index)
@@ -85,12 +93,24 @@
    ;; Completion for the |see macro and RefTeX support taken from
    ;; `makeidx.el'
    (setq TeX-complete-list
-	 (append
-	  '(("|see{\\([^{}\n\r]*\\)" 1 LaTeX-index-entry-list))
-	  TeX-complete-list))
+         (append
+          '(("|see{\\([^{}\n\r]*\\)" 1 LaTeX-index-entry-list))
+          TeX-complete-list))
    (and (fboundp 'reftex-add-index-macros)
-	(reftex-add-index-macros '(default))))
- LaTeX-dialect)
+        (reftex-add-index-macros '(default)))
+
+   ;; Fontification
+   (when (and (featurep 'font-latex)
+              (eq TeX-install-font-lock 'font-latex-setup))
+     (font-latex-add-keywords '(("makeindex"         "[")
+                                ("indexsetup"        "{")
+                                ("splitindexoptions" "{")
+                                ("indexprologue"     "[{")
+                                ("printindex"        "["))
+                              'function)
+     (font-latex-add-keywords '(("index" "[{"))
+                              'reference)))
+ TeX-dialect)
 
 (defvar LaTeX-imakeidx-package-options
   '("makeindex" "xindy" "texindy" "truexindy" "noautomatic" "nonewpage" "quiet"

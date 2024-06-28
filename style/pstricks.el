@@ -1,6 +1,6 @@
-;;; pstricks.el --- AUCTeX style for the `pstricks' package.
+;;; pstricks.el --- AUCTeX style for the `pstricks' package.  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2007, 2009, 2013-2015, 2018  Free Software Foundation, Inc.
+;; Copyright (C) 2007-2022  Free Software Foundation, Inc.
 
 ;; Author: Holger Sparr <holger.sparr@gmx.net>
 ;; Maintainer: auctex-devel@gnu.org
@@ -60,6 +60,8 @@
 
 ;;; Code:
 
+(require 'tex)
+(require 'latex)
 (eval-when-compile
   (require 'cl-lib))
 
@@ -76,10 +78,10 @@
               (crm-separator (nth 4 first))
               res)
           (setq list (cdr list))
-          (cond ((eq func 'completing-read-multiple)
+          (cond ((eq func #'completing-read-multiple)
                  (setq res (funcall func prompt list nil compl nil hist))
-                 (mapconcat 'identity res crm-separator))
-                ((eq func 'completing-read)
+                 (mapconcat #'identity res crm-separator))
+                ((eq func #'completing-read)
                  (setq res
                        (funcall func prompt list nil compl nil hist)))))
       (completing-read (concat prompt ": ") list nil nil nil hist))))
@@ -134,6 +136,8 @@ available through package name PNAME and return \"param=value\"."
                    ((string-match bregexp param)
                     'LaTeX-pst-boolean-list)))
          val compl)
+    ;; See FIXME below: The next form is just to silence the compiler:
+    (setq compl nil)
     ;; ask for value
     (setq val (TeX-arg-compl-list
                (symbol-value parlist)
@@ -387,9 +391,9 @@ package PNAME"
     ("curvature")
     ;; Dots
     ("dotstyle" ("*" "o" "Bo" "x" "+" "B+" "asterisk" "Basterisk" "oplus"
-		 "otimes" "|" "B|" "square" "Bsquare" "square*" "diamond"
-		 "Bdiamond" "diamond*" "triangle" "Btriangle" "triangle*"
-		 "pentagon" "Bpentagon" "pentagon*"))
+                 "otimes" "|" "B|" "square" "Bsquare" "square*" "diamond"
+                 "Bdiamond" "diamond*" "triangle" "Btriangle" "triangle*"
+                 "pentagon" "Bpentagon" "pentagon*"))
     ("dotsize")
     ("dotscale")
     ("dotangle")
@@ -640,8 +644,8 @@ package PNAME"
 (defun LaTeX-pst-macro-newpsobject (&optional _arg)
   "Return \\newpsobject arguments after querying."
   (insert "{" (TeX-read-string "New PSObject Name: ") "}"
-	  ;; FIXME: It would be better to use something more confined
-	  ;; than `TeX-symbol-list'.
+          ;; FIXME: It would be better to use something more confined
+          ;; than `TeX-symbol-list'.
           "{" (completing-read "Parent Object: " (TeX-symbol-list))
           "}"))
 
@@ -649,9 +653,9 @@ package PNAME"
 (defun LaTeX-pst-env-pspicture (env)
   "Create new pspicure environment."
   (let ((opt (multi-prompt-key-value
-	      (TeX-argument-prompt t "Options" nil)
-	      '(("showgrid") ("shift"))))
-	(p0 (LaTeX-pst-what "point" "Lower left (default 0,0)" "0,0"))
+              (TeX-argument-prompt t "Options" nil)
+              '(("showgrid") ("shift"))))
+        (p0 (LaTeX-pst-what "point" "Lower left (default 0,0)" "0,0"))
         (p1 (LaTeX-pst-what "point" "Upper right (default 1,1)" "1,1"))
         corn)
     (setq corn (concat (unless (string= "" opt) (format "[%s]" opt))
@@ -685,7 +689,7 @@ package PNAME"
               (setq TeX-auto-symbol
                     (cons (list (nth 1 list)
                                 (cl-caddr (assoc (nth 2 list)
-                                              (TeX-symbol-list))))
+                                                 (TeX-symbol-list))))
                           TeX-auto-symbol)))
              ((string= type "fontdot")
               (add-to-list 'LaTeX-pst-dotstyle-list (nth 1 list) t))
@@ -693,7 +697,7 @@ package PNAME"
               (add-to-list 'LaTeX-pst-style-list (nth 1 list) t))
              ((string= type "color")
               (add-to-list 'LaTeX-pst-color-list (nth 1 list) t)
-	      ;; FIXME: Why is an entry with "-" in front added?
+              ;; FIXME: Why is an entry with "-" in front added?
               (add-to-list 'LaTeX-pst-color-list
                            (concat "-" (nth 1 list)) t)))))
    LaTeX-auto-pstricks))
@@ -780,9 +784,13 @@ comma separated list. Point has to be within the sexp to modify."
  "pstricks"
  (lambda ()
    (unless (or (member "pst-pdf" TeX-active-styles)
-	       (eq TeX-engine 'xetex))
-     (TeX-PDF-mode-off))
-   (mapc 'TeX-auto-add-regexp LaTeX-auto-pstricks-regexp-list)
+               (eq TeX-engine 'xetex))
+     ;; Leave at user's choice whether to disable `TeX-PDF-mode' or
+     ;; not.  Instead set up `TeX-PDF-from-DVI' option so that AUCTeX
+     ;; takes dvips+ps2pdf route when `TeX-PDF-mode' is enabled.
+     ;; (TeX-PDF-mode-off)
+     (setq TeX-PDF-from-DVI "Dvips"))
+   (mapc #'TeX-auto-add-regexp LaTeX-auto-pstricks-regexp-list)
    (LaTeX-add-environments
     '("pspicture" LaTeX-pst-env-pspicture)
     "overlaybox" "psclip")
@@ -865,7 +873,7 @@ comma separated list. Point has to be within the sexp to modify."
     '("uput" LaTeX-pst-macro-uput t)
     '("multirput" (LaTeX-pst-macro-multirputps t) t)
     '("multips" (LaTeX-pst-macro-multirputps nil) t)))
- LaTeX-dialect)
+ TeX-dialect)
 
 (defvar LaTeX-pstricks-package-options
   '("97" "plain" "DIA" "vtex" "distiller" "noxcolor")

@@ -1,7 +1,7 @@
-;;; context-en.el --- Support for the ConTeXt english interface.
+;;; context-en.el --- Support for the ConTeXt english interface. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2003-2004, 2006, 2008, 2010, 2014
-;;   Free Software Foundation, Inc.
+;; Copyright (C) 2003-2004, 2006, 2008
+;;               2010, 2014, 2020-2022 Free Software Foundation, Inc.
 
 ;; Maintainer: Berend de Boer <berend@pobox.com>
 ;; Keywords: tex
@@ -75,7 +75,7 @@
     "indenting" "label"
     "logo" "overlay"
     "palet" "program" "startstop" "type" "typing")
-  "List of the names of ConTeXt en interface  macro's that define things.")
+  "List of the names of ConTeXt en interface macro's that define things.")
 
 (defvar ConTeXt-setup-list-en
   '("align" "arranging" "background" "backgrounds" "blackrules"
@@ -94,7 +94,7 @@
     "screens" "section" "sectionblock" "sorting" "spacing"
     "subpagenumber" "synonyms" "text" "textrules" "texttexts" "thinrules"
     "tolerance" "top" "toptexts" "type" "typing" "underbar" "whitespace")
-  "List of the names of ConTeXt en interface  macro's that setup things.")
+  "List of the names of ConTeXt en interface macro's that setup things.")
 
 ;; referencing in ConTeXt
 (defvar ConTeXt-referencing-list-en
@@ -129,11 +129,13 @@
 
 (defvar ConTeXt-project-structure-list-en
   '("project" "environment" "product" "component")
-  "List of the names of ConTeXt project structure elements for its en interface.  List should be in logical order.")
+  "List of ConTeXt project structure elements for its en interface.
+List should be in logical order.")
 
 (defvar ConTeXt-section-block-list-en
   '("frontmatter" "bodymatter" "appendices" "backmatter")
-  "List of the names of ConTeXt section blocks for its en interface.  List should be in logical order.")
+  "List of ConTeXt section block names for its en interface.
+List should be in logical order.")
 
 
 ;; TODO:
@@ -169,7 +171,7 @@
   "The ConTeXt macro's that are variants of item.")
 
 (defcustom ConTeXt-default-environment-en "itemize"
-  "*The default environment when creating new ones with `ConTeXt-environment'."
+  "The default environment when creating new ones with `ConTeXt-environment'."
   :group 'ConTeXt-en-environment
   :type 'string)
 
@@ -186,7 +188,10 @@ That is, besides the section(-block) commands.")
 
 (defun ConTeXt-en-mode-initialization ()
   "ConTeXt english interface specific initialization."
-  (mapc 'ConTeXt-add-environments (reverse ConTeXt-environment-list-en))
+  ;; FIXME: This `mapc' seems spurious because
+  ;; `ConTeXt-language-variable-list' includes
+  ;; `ConTeXt-environment-list'.
+  (mapc #'ConTeXt-add-environments (reverse ConTeXt-environment-list-en))
 
   (TeX-add-symbols
    '("but" ConTeXt-arg-define-ref (TeX-arg-literal " "))
@@ -206,8 +211,8 @@ Special commands:
 \\{ConTeXt-mode-map}
 
 Entering `context-mode' calls the value of `text-mode-hook',
-then the value of TeX-mode-hook, and then the value
-of context-mode-hook."
+then the value of `TeX-mode-hook', and then the value
+of `ConTeXt-mode-hook'."
   (interactive)
   ;; set the ConTeXt interface
   (setq ConTeXt-current-interface "en")

@@ -6,4 +6,5 @@ PROBLEMS.preview
 TODO
 ChangeLog-preview*
 circ.tex
+usr/share/doc/auctex/tex-ref.pdf
 debian/tmp/usr/doc/auctex/*

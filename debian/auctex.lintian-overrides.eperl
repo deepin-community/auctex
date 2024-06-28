@@ -2,7 +2,8 @@
 # lintian override file for the Debian auctex package
 
 # Needed to build alternative formats of the manual from sources
-auctex binary: extra-license-file usr/share/doc/auctex/src/copying.texi
+auctex binary: extra-license-file [usr/share/doc/auctex/src/copying.texi]
+auctex binary: wrong-name-for-upstream-changelog
 
 <:
 # local variables:

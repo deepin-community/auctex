@@ -2,7 +2,7 @@
 #
 # makefile rules for the Debian package auctex
 #
-# Copyright (C) 1997-2017 Davide G. M. Salvetti.
+# Copyright (C) 1997-2023 Davide G. M. Salvetti.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
@@ -29,7 +29,7 @@ EPERL_SRC := $(wildcard debian/*.eperl)
 EPERL_OBJ := $(EPERL_SRC:%.eperl=%)
 
 debian/clean: $(EPERL_OBJ)
-	echo $(filter-out debian/copyright debian/rules \
+	echo $(filter-out debian/rules \
 		debian/auctex.templates, $(EPERL_OBJ)) \
 		debian/auctex.templates.dcobj \
 		debian/clean > debian/clean
@@ -52,6 +52,7 @@ override_dh_auto_build: debian/clean
 	chmod a+x debian/elcc
 	$(MAKE) ELCC=$(ELCC)
 	rm --force auto-loads.el
+	touch --reference debian/changelog tex.el tex-site.el
 	$(MAKE) auto-loads.el
 	$(MAKE) tex-site.el
 	cd doc && $(MAKE) auctex.htmls/index.html
@@ -79,7 +80,6 @@ override_dh_compress:
 .PHONY: override_dh_installdocs
 override_dh_installdocs:
 	install -m 755 -d debian/tmp/usr/doc/auctex/src
-	install -m 644 doc/tex-ref.pdf debian/tmp/usr/doc/auctex
 	install -m 644 doc/*.tex{,i} debian/tmp/usr/doc/auctex/src
 	install -m 644 etc/auctex-logo.tex debian/tmp/usr/doc/auctex/src
 	install -m 755 -d \

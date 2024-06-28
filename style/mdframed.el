@@ -1,6 +1,6 @@
-;;; mdframed.el --- AUCTeX style for `mdframed.sty' (v1.9b)
+;;; mdframed.el --- AUCTeX style for `mdframed.sty' (v1.9b)  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2016--2018 Free Software Foundation, Inc.
+;; Copyright (C) 2016--2022 Free Software Foundation, Inc.
 
 ;; Author: Arash Esbati <arash@gnu.org>
 ;; Maintainer: auctex-devel@gnu.org
@@ -37,17 +37,16 @@
 
 ;;; Code:
 
+(require 'tex)
+(require 'latex)
 ;; Needed for compiling `cl-pushnew':
 (eval-when-compile
   (require 'cl-lib))
 
-;; Needed for auto-parsing:
-(require 'tex)
-
 ;; Silence the compiler:
 (declare-function font-latex-add-keywords
-		  "font-latex"
-		  (keywords class))
+                  "font-latex"
+                  (keywords class))
 
 (declare-function LaTeX-color-definecolor-list "color" ())
 (declare-function LaTeX-xcolor-definecolor-list "xcolor" ())
@@ -162,10 +161,6 @@
     ("theoremspace"))
   "Key=value options for mdframed macros and environments.")
 
-(defvar LaTeX-mdframed-key-val-options-local nil
-  "Buffer-local key=value options for mdframed macros and environments.")
-(make-variable-buffer-local 'LaTeX-mdframed-key-val-options-local)
-
 ;; Setup for \newmdenv
 
 (TeX-auto-add-type "mdframed-newmdenv" "LaTeX")
@@ -174,13 +169,9 @@
   `(,(concat
       "\\\\newmdenv"
       "[ \t\n\r%]*"
-      "\\(?:\\[[^][]*"
-        "\\(?:{[^}{]*"
-	  "\\(?:{[^}{]*"
-	    "\\(?:{[^}{]*}[^}{]*\\)*"
-	  "}[^}{]*\\)*"
-	"}[^][]*\\)*"
-      "\\]\\)?"
+      "\\(?:"
+      (LaTeX-extract-key-value-label 'none)
+      "\\)?"
       "[ \t\n\r%]*"
       "{\\([^}]+\\)}")
     1 LaTeX-auto-mdframed-newmdenv)
@@ -203,77 +194,69 @@
   `(,(concat
       "\\\\\\(new\\)?mdtheorem\\(?:env\\)?"
       "[ \t\n\r%]*"
-      "\\(?:\\[[^][]*"
-        "\\(?:{[^}{]*"
-	  "\\(?:{[^}{]*"
-	    "\\(?:{[^}{]*}[^}{]*\\)*"
-	  "}[^}{]*\\)*"
-	"}[^][]*\\)*"
-      "\\]\\)?"
+      "\\(?:"
+      (LaTeX-extract-key-value-label 'none)
+      "\\)?"
       "[ \t\n\r%]*"
       "{\\([^}]+\\)}")
     (2 1) LaTeX-auto-mdframed-mdtheorem)
   "Matches the argument of \\newmdtheoremenv and \\mdtheorem from mdframed package.")
 
-(defun LaTeX-mdframed-update-style-key ()
-  "Update some key=values in `LaTeX-mdframed-key-val-options-local'."
-  ;; Add new "style"s to key=vals:
-  (when (LaTeX-mdframed-mdfdefinestyle-list)
-    (let* ((key (car (assoc "style" LaTeX-mdframed-key-val-options-local)))
-	   (val (cadr (assoc "style" LaTeX-mdframed-key-val-options)))
-	   (temp (copy-alist LaTeX-mdframed-key-val-options-local))
-	   (opts (assq-delete-all (car (assoc key temp)) temp)))
-      (cl-pushnew (list key (TeX-delete-duplicate-strings
-			     (append val (mapcar #'car (LaTeX-mdframed-mdfdefinestyle-list)))))
-	          opts :test #'equal)
-      (setq LaTeX-mdframed-key-val-options-local
-	    (copy-alist opts))))
-  ;;
-  ;; Check if any color defininig package is loaded and update the
-  ;; key=values for coloring.  Prefer xcolor.sty if both packages are
-  ;; loaded.
-  (when (or (member "xcolor" (TeX-style-list))
-	    (member "color" (TeX-style-list)))
-    (let* ((colorcmd (if (member "xcolor" (TeX-style-list))
-			 #'LaTeX-xcolor-definecolor-list
-		       #'LaTeX-color-definecolor-list))
-	   (keys '("linecolor"
-		   "innerlinecolor"
-		   "middlelinecolor"
-		   "outerlinecolor"
-		   "backgroundcolor"
-		   "fontcolor"
-		   "shadowcolor"
-		   "frametitlebackgroundcolor"
-		   "subtitlebackgroundcolor"
-		   "subtitleabovelinecolor"
-		   "subtitlebelowlinecolor"))
-	   (tmp (copy-alist LaTeX-mdframed-key-val-options-local)))
-      (dolist (x keys)
-	(setq tmp (assq-delete-all (car (assoc x tmp)) tmp))
-	(cl-pushnew (list x (mapcar #'car (funcall colorcmd))) tmp :test #'equal))
-      (setq LaTeX-mdframed-key-val-options-local
-	    (copy-alist tmp)))))
+(defun LaTeX-mdframed-key-val-options ()
+  "Return an updated list of key=vals from mdframed package.
+This function retrieves values of user defined styles and colors
+and prepends them to variable `LaTeX-mdframed-key-val-options'."
+  (append
+   (when (LaTeX-mdframed-mdfdefinestyle-list)
+     (let ((val (copy-sequence
+                 (cadr (assoc "style" LaTeX-mdframed-key-val-options)))))
+       `(("style" ,(append
+                    (mapcar #'car (LaTeX-mdframed-mdfdefinestyle-list))
+                    val)))))
+   ;; Check if any color defininig package is loaded and update the
+   ;; key=values for coloring.  Prefer xcolor.sty if both packages are
+   ;; loaded.  Run `TeX-style-list' only once and use
+   ;; `TeX-active-styles' afterwards:
+   (when (or (member "xcolor" (TeX-style-list))
+             (member "color" TeX-active-styles))
+     (let* ((colorcmd (if (member "xcolor" TeX-active-styles)
+                          #'LaTeX-xcolor-definecolor-list
+                        #'LaTeX-color-definecolor-list))
+            (colors (mapcar #'car (funcall colorcmd)))
+            (keys '("linecolor"
+                    "innerlinecolor"
+                    "middlelinecolor"
+                    "outerlinecolor"
+                    "backgroundcolor"
+                    "fontcolor"
+                    "shadowcolor"
+                    "frametitlebackgroundcolor"
+                    "subtitlebackgroundcolor"
+                    "subtitleabovelinecolor"
+                    "subtitlebelowlinecolor"))
+            result)
+       (dolist (key keys result)
+         (cl-pushnew (list key colors) result :test #'equal))))
+   LaTeX-mdframed-key-val-options))
 
 (defun LaTeX-mdframed-auto-prepare ()
   "Clear variables before parsing for mdframed package."
   (setq LaTeX-auto-mdframed-newmdenv       nil
-	LaTeX-auto-mdframed-mdfdefinestyle nil
-	LaTeX-auto-mdframed-mdtheorem      nil))
+        LaTeX-auto-mdframed-mdfdefinestyle nil
+        LaTeX-auto-mdframed-mdtheorem      nil))
 
 (defun LaTeX-mdframed-auto-cleanup ()
   "Process parsed elements for mdframed package."
   (dolist (env (mapcar #'car (LaTeX-mdframed-newmdenv-list)))
     (LaTeX-add-environments
-     `(,env LaTeX-env-args [ TeX-arg-key-val LaTeX-mdframed-key-val-options-local ] ))
+     `(,env LaTeX-env-args [TeX-arg-key-val (LaTeX-mdframed-key-val-options)] ))
     (TeX-ispell-skip-setcdr `((,env ispell-tex-arg-end 0))))
   (dolist (newenv (LaTeX-mdframed-mdtheorem-list))
     (let ((env (car newenv))
-	  (new (cadr newenv)))
+          (new (cadr newenv)))
       (LaTeX-add-environments (list env (vector "Heading")))
       (unless (and new (not (string= new "")))
-	(LaTeX-add-environments (list (concat env "*") (vector "Heading"))))))
-  (LaTeX-mdframed-update-style-key))
+        (LaTeX-add-environments (list (concat env "*") (vector "Heading")))))))
 
 (add-hook 'TeX-auto-prepare-hook #'LaTeX-mdframed-auto-prepare t)
 (add-hook 'TeX-auto-cleanup-hook #'LaTeX-mdframed-auto-cleanup t)
@@ -288,137 +271,119 @@
    (TeX-auto-add-regexp LaTeX-mdframed-mdfdefinestyle-regexp)
    (TeX-auto-add-regexp LaTeX-mdframed-mdtheorem-regexp)
 
-   ;; Local version of key-val options
-   (setq LaTeX-mdframed-key-val-options-local
-	 (copy-alist LaTeX-mdframed-key-val-options))
-
    ;; 4. Commands
    (TeX-add-symbols
     '("mdfsetup"
-      (TeX-arg-key-val LaTeX-mdframed-key-val-options-local))
+      (TeX-arg-key-val (LaTeX-mdframed-key-val-options)))
 
-    '("newmdenv"
-      [ TeX-arg-key-val LaTeX-mdframed-key-val-options-local ]
-      (TeX-arg-eval
-       (lambda ()
-	 (let ((env (TeX-read-string
-		     (TeX-argument-prompt optional nil "Environment"))))
-	   (LaTeX-add-environments
-	    `(,env LaTeX-env-args [ TeX-arg-key-val LaTeX-mdframed-key-val-options-local ]))
-	   ;; Add new env's to `ispell-tex-skip-alist': skip the optional argument
-	   (TeX-ispell-skip-setcdr `((,env ispell-tex-arg-end 0)))
-	   (format "%s" env)))))
+    `("newmdenv"
+      [TeX-arg-key-val (LaTeX-mdframed-key-val-options)]
+      ,(lambda (optional)
+         (let ((env (TeX-read-string
+                     (TeX-argument-prompt optional nil "Environment"))))
+           (LaTeX-add-environments
+            `(,env LaTeX-env-args [TeX-arg-key-val (LaTeX-mdframed-key-val-options)]))
+           ;; Add new env's to `ispell-tex-skip-alist': skip the optional argument
+           (TeX-ispell-skip-setcdr `((,env ispell-tex-arg-end 0)))
+           (TeX-argument-insert env optional))))
 
     '("renewmdenv"
-      [ TeX-arg-key-val LaTeX-mdframed-key-val-options-local ]
-      (TeX-arg-eval completing-read
-		    (TeX-argument-prompt optional nil "Environment")
-		    (LaTeX-mdframed-newmdenv-list)))
+      [TeX-arg-key-val (LaTeX-mdframed-key-val-options)]
+      (TeX-arg-completing-read (LaTeX-mdframed-newmdenv-list) "Environment"))
 
     '("surroundwithmdframed"
-      [ TeX-arg-key-val LaTeX-mdframed-key-val-options-local ]
+      [TeX-arg-key-val (LaTeX-mdframed-key-val-options)]
       TeX-arg-environment)
 
     '("mdflength"
-      (TeX-arg-eval completing-read
-		    (TeX-argument-prompt optional nil "Length")
-		    '(("skipabove")
-		      ("skipbelow")
-		      ("leftmargin")
-		      ("rightmargin")
-		      ("innerleftmargin")
-		      ("innerrightmargin")
-		      ("innertopmargin")
-		      ("innerbottommargin")
-		      ("linewidth")
-		      ("innerlinewidth")
-		      ("middlelinewidth")
-		      ("outerlinewidth"))))
+      (TeX-arg-completing-read ("skipabove"       "skipbelow"
+                                "leftmargin"      "rightmargin"
+                                "innerleftmargin" "innerrightmargin"
+                                "innertopmargin"  "innerbottommargin"
+                                "linewidth"       "innerlinewidth"
+                                "middlelinewidth" "outerlinewidth")
+                               "Length"))
 
     ;; 5. Defining your own style
-    '("mdfdefinestyle"
-      (TeX-arg-eval
-       (lambda ()
-	 (let ((style (TeX-read-string
-		       (TeX-argument-prompt optional nil "Style name"))))
-	   (LaTeX-add-mdframed-mdfdefinestyles style)
-	   (LaTeX-mdframed-update-style-key)
-	   (format "%s" style))))
-      (TeX-arg-key-val LaTeX-mdframed-key-val-options-local))
+    `("mdfdefinestyle"
+      ,(lambda (optional)
+         (let ((style (TeX-read-string
+                       (TeX-argument-prompt optional nil "Style name"))))
+           (LaTeX-add-mdframed-mdfdefinestyles style)
+           (TeX-argument-insert style optional)))
+      (TeX-arg-key-val (LaTeX-mdframed-key-val-options)))
 
     '("mdfapptodefinestyle"
-      (TeX-arg-eval completing-read
-		    (TeX-argument-prompt optional nil "Style name")
-		    (LaTeX-mdframed-mdfdefinestyle-list))
-      (TeX-arg-key-val LaTeX-mdframed-key-val-options-local))
+      (TeX-arg-completing-read (LaTeX-mdframed-mdfdefinestyle-list) "Style name")
+      (TeX-arg-key-val (LaTeX-mdframed-key-val-options)))
 
     ;; 6.11. Title commands inside the environment
     '("mdfsubtitle"
-      [ TeX-arg-key-val LaTeX-mdframed-key-val-options-local ]
+      [TeX-arg-key-val (LaTeX-mdframed-key-val-options)]
       "Subtitle")
 
     ;; 8. Theorems
-    '("newmdtheoremenv"
-      [ TeX-arg-key-val LaTeX-mdframed-key-val-options-local ]
-      (TeX-arg-eval
-       (lambda ()
-	 (let ((nthm (TeX-read-string
-		      (TeX-argument-prompt optional nil "Environment"))))
-	   (LaTeX-add-environments (list nthm (vector "Heading")))
-	   (format "%s" nthm))))
-      [ TeX-arg-environment "Numbered like" ]
+    `("newmdtheoremenv"
+      [TeX-arg-key-val (LaTeX-mdframed-key-val-options)]
+      ,(lambda (optional)
+         (let ((nthm (TeX-read-string
+                      (TeX-argument-prompt optional nil "Environment"))))
+           (LaTeX-add-environments (list nthm (vector "Heading")))
+           (TeX-argument-insert nthm optional)))
+      [TeX-arg-environment "Numbered like"]
       t [ (TeX-arg-eval progn (if (eq (save-excursion
-					(backward-char 2)
-					(preceding-char)) ?\])
-				  ()
-				(TeX-arg-counter t "Within counter"))
-			"") ])
+                                        (backward-char 2)
+                                        (preceding-char))
+                                      ?\])
+                                  ()
+                                (TeX-arg-counter t "Within counter"))
+                        "") ])
 
-    '("mdtheorem"
-      [ TeX-arg-key-val LaTeX-mdframed-key-val-options-local ]
-      (TeX-arg-eval
-       (lambda ()
-	 (let ((nthm (TeX-read-string
-		      (TeX-argument-prompt optional nil "Environment"))))
-	   (LaTeX-add-environments (list nthm (vector "Heading"))
-				   (list (concat nthm "*") (vector "Heading")))
-	   (format "%s" nthm))))
-      [ TeX-arg-environment "Numbered like" ]
+    `("mdtheorem"
+      [TeX-arg-key-val (LaTeX-mdframed-key-val-options)]
+      ,(lambda (optional)
+         (let ((nthm (TeX-read-string
+                      (TeX-argument-prompt optional nil "Environment"))))
+           (LaTeX-add-environments (list nthm (vector "Heading"))
+                                   (list (concat nthm "*") (vector "Heading")))
+           (TeX-argument-insert nthm optional)))
+      [TeX-arg-environment "Numbered like"]
       t [ (TeX-arg-eval progn (if (eq (save-excursion
-					(backward-char 2)
-					(preceding-char)) ?\])
-				  ()
-				(TeX-arg-counter t "Within counter"))
-			"") ]))
+                                        (backward-char 2)
+                                        (preceding-char))
+                                      ?\])
+                                  ()
+                                (TeX-arg-counter t "Within counter"))
+                        "") ]))
 
    ;; Main environment defined by mdframed.sty
    (LaTeX-add-environments
     '("mdframed" LaTeX-env-args
-      [ TeX-arg-key-val LaTeX-mdframed-key-val-options-local ] ))
+      [TeX-arg-key-val (LaTeX-mdframed-key-val-options)] ))
 
    ;; Fontification
    (when (and (featurep 'font-latex)
-	      (eq TeX-install-font-lock 'font-latex-setup))
+              (eq TeX-install-font-lock 'font-latex-setup))
      (font-latex-add-keywords '(("newmdenv"             "[{")
-				("renewmdenv"           "[{")
-				("surroundwithmdframed" "[{")
-				("mdfsetup"             "[{")
-				("mdfdefinestyle"       "{{")
-				("mdfapptodefinestyle"  "{{")
-				("newmdtheoremenv"      "[{[{[")
-				("mdtheorem"            "[{[{["))
-			      'function)
+                                ("renewmdenv"           "[{")
+                                ("surroundwithmdframed" "[{")
+                                ("mdfsetup"             "[{")
+                                ("mdfdefinestyle"       "{{")
+                                ("mdfapptodefinestyle"  "{{")
+                                ("newmdtheoremenv"      "[{[{[")
+                                ("mdtheorem"            "[{[{["))
+                              'function)
      (font-latex-add-keywords '(("mdfsubtitle"          "[{"))
-			      'sectioning-5)
+                              'sectioning-5)
      (font-latex-add-keywords '(("mdflength"            "{"))
-			      'variable)))
- LaTeX-dialect)
+                              'variable)))
+ TeX-dialect)
 
 (defvar LaTeX-mdframed-package-options-list
   '(("xcolor")
     ("framemethod" ("default" "tex" "latex" "none" "0"
-		    "tikz" "pgf" "1"
-		    "pstricks" "ps" "postscript" "2"))
+                    "tikz" "pgf" "1"
+                    "pstricks" "ps" "postscript" "2"))
     ("tikz") ("TikZ")
     ("ps") ("pstricks") ("PSTricks"))
   "Package options for the framed package.")

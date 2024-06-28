@@ -1,6 +1,6 @@
-;;; beamerarticle.el --- AUCTeX style for the latex-beamerarticle class
+;;; beamerarticle.el --- AUCTeX style for the latex-beamerarticle class  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2019 Free Software Foundation, Inc.
+;; Copyright (C) 2019--2023 Free Software Foundation, Inc.
 
 ;; Keywords: tex
 
@@ -27,7 +27,14 @@
 
 ;;; Code:
 
+(require 'tex)
+(require 'latex)
+
 (TeX-add-style-hook
  "beamerarticle"
  (lambda ()
-   (TeX-run-style-hooks "beamer")))
+   (TeX-run-style-hooks "beamer")
+
+   (LaTeX-section-list-add-locally
+    '(("paragraph" 4)
+      ("subparagraph" 5)))))

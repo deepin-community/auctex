@@ -1,6 +1,6 @@
-;;; bigdelim.el --- AUCTeX style for `bigdelim.sty'
+;;; bigdelim.el --- AUCTeX style for `bigdelim.sty'  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2011 Free Software Foundation, Inc.
+;; Copyright (C) 2011--2022 Free Software Foundation, Inc.
 
 ;; Author: Mads Jensen <mje@inducks.org>
 ;; Maintainer: auctex-devel@gnu.org
@@ -26,26 +26,73 @@
 
 ;;; Commentary:
 
-;; This file adds support for `bigdelim.sty'.
+;; This file adds support for `bigdelim.sty', v2.6 from 2021/01/02.
 
 ;;; Code:
+
+(require 'tex)
+(require 'latex)
+
+;; Silence the compiler:
+(declare-function font-latex-add-keywords
+                  "font-latex"
+                  (keywords class))
+
+(defun TeX-arg-bigdelim-brace (optional side &optional prompt)
+  "Prompt for a single brace, and do not insert the matching one.
+If OPTIONAL is non-nil, include the argument only if not empty.
+SIDE is one of the symbols `left' or `right'. PROMPT replaces the
+standard one."
+  (let* ((brace (completing-read
+                 (TeX-argument-prompt optional prompt "Brace")
+                 (if (eq side 'left)
+                     '("(" "[" "{" "\\langle" "|" "\\|" "\\lceil" "\\lfloor")
+                   '(")" "]" "}" "\\rangle" "|" "\\|" "\\rceil" "\\rfloor"))))
+         (TeX-arg-opening-brace (if (member (substring brace 0 1)
+                                            `("{" "}" ,TeX-esc))
+                                    ""
+                                  TeX-grop))
+         (TeX-arg-closing-brace (if (string= TeX-arg-opening-brace TeX-grop)
+                                    TeX-grcl
+                                  "")))
+    (TeX-argument-insert brace optional (when (member brace '("{" "}"))
+                                          TeX-esc))))
 
 (TeX-add-style-hook
  "bigdelim"
  (lambda ()
-   (TeX-add-symbols
-    '("ldelim" TeX-arg-bigdelim-brace "Number of rows for multirow"
-      "Width in multirow" [ "Text in multirow" ])
-    '("rdelim" TeX-arg-bigdelim-brace "Number of rows for multirow"
-      "Width in multirow" [ "Text in multirow" ])))
- LaTeX-dialect)
 
-(defun TeX-arg-bigdelim-brace (optional &optional prompt)
-  "Prompt for a single brace, and do not insert the matching
-  right parentheses."
-  (let ((brace (read-from-minibuffer
-   (TeX-argument-prompt optional prompt "Brace") nil)))
-    (insert (format "%s" brace))))
+   (TeX-run-style-hooks "multirow")
+
+   (TeX-add-symbols
+    `("ldelim"
+      (TeX-arg-bigdelim-brace left)
+      "Number of rows for multirow"
+      (TeX-arg-completing-read
+       ,(lambda () (append '("*")
+                           (mapcar (lambda (x)
+                                     (concat TeX-esc (car x)))
+                                   (LaTeX-length-list))))
+       "Width in multirow")
+      [ "Text in multirow" ])
+    `("rdelim"
+      (TeX-arg-bigdelim-brace right)
+      "Number of rows for multirow"
+      (TeX-arg-completing-read
+       ,(lambda () (append '("*")
+                           (mapcar (lambda (x)
+                                     (concat TeX-esc (car x)))
+                                   (LaTeX-length-list))))
+       "Width in multirow")
+      [ "Text in multirow" ]))
+
+   ;; Fontification
+   (when (and (featurep 'font-latex)
+              (eq TeX-install-font-lock 'font-latex-setup))
+     (font-latex-add-keywords '(("ldelim" "|{\\{{[")
+                                ("rdelim" "|{\\{{["))
+                              'function)))
+ TeX-dialect)
 
 (defvar LaTeX-bigdelim-package-options nil
   "Package options for the bigdelim package.")

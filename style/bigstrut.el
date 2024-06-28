@@ -1,6 +1,6 @@
-;;; bigstrut.el --- AUCTeX style for `bigstrut.sty'
+;;; bigstrut.el --- AUCTeX style for `bigstrut.sty'  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2012, 2014 Free Software Foundation, Inc.
+;; Copyright (C) 2012, 2014--2022 Free Software Foundation, Inc.
 
 ;; Author: Mads Jensen <mje@inducks.org>
 ;; Maintainer: auctex-devel@gnu.org
@@ -25,25 +25,34 @@
 
 ;;; Commentary:
 
-;; This file adds support for `bigstrut.sty'.
+;; This file adds support for `bigstrut.sty', v2.6 from 2021/01/02.
 
 ;;; Code:
+
+(require 'tex)
+(require 'latex)
+
+;; Silence the compiler:
+(declare-function font-latex-add-keywords
+                  "font-latex"
+                  (keywords class))
 
 (TeX-add-style-hook
  "bigstrut"
  (lambda ()
    (TeX-add-symbols
-    "bigstrutsetup"
-    '("bigstrut" [ TeX-arg-bigstrut ])))
- LaTeX-dialect)
+    '("bigstrut"
+      [TeX-arg-completing-read ("t" "b")
+                               "Strut to top (t) or bottom (b)"]))
 
-(defun TeX-arg-bigstrut (optional &optional _prompt)
-  "Prompt for the optional argument in \\bigstrut."
-  (TeX-argument-insert
-   (completing-read (TeX-argument-prompt
-     optional "Strut to top (t) or bottom (b)" nil t)
-                    (mapcar 'list '("t" "b")) nil t)
-   optional))
+   (LaTeX-add-lengths "bigstrutjot")
+
+   ;; Fontification
+   (when (and (featurep 'font-latex)
+              (eq TeX-install-font-lock 'font-latex-setup))
+     (font-latex-add-keywords '(("bigstrut" "["))
+                              'function)))
+ TeX-dialect)
 
 (defvar LaTeX-bigstrut-package-options nil
   "Package options for the bigstrut package.")

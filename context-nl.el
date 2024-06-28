@@ -1,6 +1,7 @@
-;;; context-nl.el --- Support for the ConTeXt dutch interface.
+;;; context-nl.el --- Support for the ConTeXt dutch interface. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2003, 2004, 2006, 2010, 2015 Free Software Foundation, Inc.
+;; Copyright (C) 2003, 2004, 2006, 2010,
+;;               2015, 2020-2022 Free Software Foundation, Inc.
 
 ;; Maintainer: Berend de Boer <berend@pobox.com>
 ;; Keywords: tex
@@ -91,7 +92,7 @@
 ;; referencing in ConTeXt
 (defvar ConTeXt-referencing-list-nl
   '("in" "op" "over" "paginareferentie" "tekstreferentie" "referentie")
-  "List of ConTeXt en macro's that are used for referencing."
+  "List of ConTeXt nl macro's that are used for referencing."
 )
 
 (defvar ConTeXt-other-macro-list-nl
@@ -108,11 +109,13 @@
 
 (defvar ConTeXt-project-structure-list-nl
   '("project" "omgeving" "produkt" "onderdeel")
-  "List of the names of ConTeXt project structure elements for its nl interface.  List should be in logical order.")
+  "List of ConTeXt project structure elements for its nl interface.
+List should be in logical order.")
 
 (defvar ConTeXt-section-block-list-nl
   '("inleidingen" "hoofdteksten" "bijlagen" "uitleidingen")
-  "List of the names of ConTeXt section blocks for its nl interface.  List should be in logical order.")
+  "List of ConTeXt section block names for its nl interface.
+List should be in logical order.")
 
 
 ;; TODO:
@@ -143,7 +146,7 @@
   "The ConTeXt macro's that are variants of item.")
 
 (defcustom ConTeXt-default-environment-nl "opsomming"
-  "*The default environment when creating new ones with `ConTeXt-environment'."
+  "The default environment when creating new ones with `ConTeXt-environment'."
   :group 'ConTeXt-nl-environment
   :type 'string)
 
@@ -160,7 +163,10 @@ That is, besides the section(-block) commands.")
 
 (defun ConTeXt-nl-mode-initialization ()
   "ConTeXt dutch interface specific initialization."
-  (mapc 'ConTeXt-add-environments (reverse ConTeXt-environment-list-nl))
+  ;; FIXME: This `mapc' seems spurious because
+  ;; `ConTeXt-language-variable-list' includes
+  ;; `ConTeXt-environment-list'.
+  (mapc #'ConTeXt-add-environments (reverse ConTeXt-environment-list-nl))
 
   (TeX-add-symbols
    '("but" ConTeXt-arg-define-ref (TeX-arg-literal " "))
@@ -180,8 +186,8 @@ Special commands:
 \\{ConTeXt-mode-map}
 
 Entering `context-mode' calls the value of `text-mode-hook',
-then the value of TeX-mode-hook, and then the value
-of context-mode-hook."
+then the value of `TeX-mode-hook', and then the value
+of `ConTeXt-mode-hook'."
   (interactive)
 
   ;; set the ConTeXt interface

@@ -1,6 +1,6 @@
-;;; attachfile.el --- AUCTeX style for `attachfile.sty' (v1.6)
+;;; attachfile.el --- AUCTeX style for `attachfile.sty' (v1.6)  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2015, 2018 Free Software Foundation, Inc.
+;; Copyright (C) 2015--2022 Free Software Foundation, Inc.
 
 ;; Author: Arash Esbati <arash@gnu.org>
 ;; Maintainer: auctex-devel@gnu.org
@@ -31,10 +31,12 @@
 
 ;;; Code:
 
+(require 'tex)
+
 ;; Silence the compiler:
 (declare-function font-latex-add-keywords
-		  "font-latex"
-		  (keywords class))
+                  "font-latex"
+                  (keywords class))
 
 (defvar LaTeX-attachfile-key-val-options
   '(("appearance" ("true" "false"))
@@ -78,26 +80,26 @@
 
    (TeX-add-symbols
     ;; \attachfile[<options>]{<filename>}
-    '("attachfile"
+    `("attachfile"
       [TeX-arg-key-val LaTeX-attachfile-key-val-options]
-      (TeX-arg-eval
-       (lambda ()
-	 (let ((atfi (file-relative-name
-		      (read-file-name "File to attach: "))))
-	   (format "%s" atfi)))))
+      ,(lambda (optional)
+         (let ((atfi (file-relative-name
+                      (read-file-name
+                       (TeX-argument-prompt optional nil "File to attach")))))
+           (TeX-argument-insert atfi optional))))
 
     ;; \noattachfile[<options>]
     '("noattachfile"
       [TeX-arg-key-val LaTeX-attachfile-key-val-options] )
 
     ;; \textattachfile[<options>]{<filename>}{<text>}
-    '("textattachfile"
+    `("textattachfile"
       [TeX-arg-key-val LaTeX-attachfile-key-val-options]
-      (TeX-arg-eval
-       (lambda ()
-	 (let ((atfi (file-relative-name
-		      (read-file-name "File to attach: "))))
-	   (format "%s" atfi))))
+      ,(lambda (optional)
+         (let ((atfi (file-relative-name
+                      (read-file-name
+                       (TeX-argument-prompt optional nil "File to attach")))))
+           (TeX-argument-insert atfi optional)))
       t)
 
     ;; \notextattachfile[<options>]{<text>}
@@ -110,14 +112,14 @@
 
    ;; Fontification
    (when (and (featurep 'font-latex)
-	      (eq TeX-install-font-lock 'font-latex-setup))
+              (eq TeX-install-font-lock 'font-latex-setup))
      (font-latex-add-keywords '(("attachfilesetup"  "{")
-				("attachfile"       "[{")
-				("noattachfile"     "[")
-				("textattachfile"   "[{{")
-				("notextattachfile" "[{"))
-			      'function)))
- LaTeX-dialect)
+                                ("attachfile"       "[{")
+                                ("noattachfile"     "[")
+                                ("textattachfile"   "[{{")
+                                ("notextattachfile" "[{"))
+                              'function)))
+ TeX-dialect)
 
 (defvar LaTeX-attachfile-package-options nil
   "Prompt for package options for the attachfile package.")

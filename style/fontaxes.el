@@ -1,6 +1,6 @@
-;;; fontaxes.el --- AUCTeX style for `fontaxes.sty' version v1.0d
+;;; fontaxes.el --- AUCTeX style for `fontaxes.sty' version v1.0d  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2014, 2018 Free Software Foundation, Inc.
+;; Copyright (C) 2014--2022 Free Software Foundation, Inc.
 
 ;; Author: Arash Esbati <arash@gnu.org>
 ;; Maintainer: auctex-devel@gnu.org
@@ -34,43 +34,42 @@
 
 ;;; Code:
 
+(require 'tex)
+
 ;; Silence the compiler:
 (declare-function font-latex-add-keywords
-		  "font-latex"
-		  (keywords class))
+                  "font-latex"
+                  (keywords class))
 
 (TeX-add-style-hook
  "fontaxes"
  (lambda ()
    (TeX-add-symbols
-    ;; Various font shapes
-    '("swshape"           -1)  ; swash shape
-    '("sscshape"          -1)  ; spaced small caps
+    ;; Various font shapes:
+    ;; These macros are now part of LaTeX kernel 2020-02-02
+    ;; '("swshape"           -1)  ; swash shape
+    ;; '("sscshape"          -1)  ; spaced small caps
+    ;; '("swdefault"          0)
+    ;; '("sscdefault"         0)
+    ;; '("ulcdefault"         0)
     '("fontprimaryshape"   t)
     '("fontsecondaryshape" t)
-    '("swdefault"          t)
-    '("sscdefault"         t)
-    '("ulcdefault"         t)
 
     ;; Figure versions
     '("figureversion"
-      (TeX-arg-eval mapconcat 'identity
-                    (TeX-completing-read-multiple
-                     "Style, alignment: "
-                     '(("text") ("osf")
-                       ("lining") ("lf")
-                       ("tabular") ("tab")
-                       ("proportional") ("prop"))) ","))
+      (TeX-arg-completing-read-multiple ("text"         "osf"
+                                         "lining"       "lf"
+                                         "tabular"      "tab"
+                                         "proportional" "prop")
+                                        "Style, alignment"))
     '("txfigures" -1)  ; style: text figures (osf)
     '("lnfigures" -1)  ; style: lining figures
     '("tbfigures" -1)  ; alignment: tabular figures
     '("prfigures" -1)  ; alignment: proportional figures
     '("fontfigurestyle"
-      (TeX-arg-eval completing-read "Style: "
-                    '(("text") ("lining"))))
+      (TeX-arg-completing-read ("text" "lining") "Style"))
     '("fontfigurealignment"
-      (TeX-arg-eval completing-read "Alignment: "
-                    '(("tabular") ("proportional"))))
+      (TeX-arg-completing-read ("tabular" "proportional") "Alignment"))
     '("fontbasefamily" t)
 
     ;; Math versions
@@ -79,16 +78,15 @@
     '("tabularmath"      -1)  ; math figure alignment
     '("proportionalmath" -1)  ;
     '("mathweight"
-      (TeX-arg-eval completing-read "Math weight: "
-                    '(("bold") ("normal"))))
+      (TeX-arg-completing-read ("bold" "normal") "Math weight"))
     '("mathfigurealignment"
-      (TeX-arg-eval completing-read "Math figure alignment: "
-                    '(("tabular") ("proportional"))))
+      (TeX-arg-completing-read ("tabular" "proportional") "Math figure alignment"))
 
     ;; Additional commands
-    '("textsw"              t)
-    '("textssc"             t)
-    '("textulc"             t)
+    ;; These macros are now part of LaTeX kernel 2020-02-02
+    ;; '("textsw"              t)
+    ;; '("textssc"             t)
+    ;; '("textulc"             t)
     '("textfigures"         t)
     '("liningfigures"       t)
     '("tabularfigures"      t)
@@ -102,16 +100,9 @@
                                 ("tabularfigures"      "{")
                                 ("proportionalfigures" "{"))
                               'type-command)
-     (font-latex-add-keywords '(("textsw"              "{")
-                                ("textssc"             "{")
-                                ("textulc"             "{"))
-                              'bold-command)
-     (font-latex-add-keywords '(("swshape"             "")
-                                ("sscshape"            ""))
-                              'bold-declaration)
      (font-latex-add-keywords '(("figureversion"       "{"))
                               'variable)))
- LaTeX-dialect)
+ TeX-dialect)
 
 (defvar LaTeX-fontaxes-package-options nil
   "Package options for the fontaxes package.")

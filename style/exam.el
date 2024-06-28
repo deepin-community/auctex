@@ -1,6 +1,6 @@
-;;; exam.el --- AUCTeX style for the (LaTeX) exam class
+;;; exam.el --- AUCTeX style for the (LaTeX) exam class  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2016--2018 Free Software Foundation, Inc.
+;; Copyright (C) 2016--2022 Free Software Foundation, Inc.
 
 ;; Author: Uwe Brauer <oub@mat.ucm.es>
 ;; Created: 2016-03-06
@@ -32,10 +32,13 @@
 
 ;;; Code:
 
+(require 'tex)
+(require 'latex)
+
 ;; Silence the compiler:
 (declare-function font-latex-add-keywords
-		  "font-latex"
-		  (keywords class))
+                  "font-latex"
+                  (keywords class))
 
 (defvar LaTeX-article-class-options)
 
@@ -49,19 +52,23 @@
   (add-to-list 'LaTeX-exam-class-options opt))
 
 (defun LaTeX-exam-insert-item ()
-  "Insert a new item in an environment from exam class.
+  "Insert a new item in the current environment from exam class.
 Item inserted depends on the environment."
-  (TeX-insert-macro
-   (cond ((string= environment "questions")
-          "question")
-         ((string= environment "parts")
-          "part")
-         ((string= environment "subparts")
-          "subpart")
-         ((string= environment "subsubparts")
-          "subsubpart")
-         ;; Fallback
-         (t "item"))))
+  (let ((env (LaTeX-current-environment)))
+    (TeX-insert-macro
+     (cond ((string= env "questions")
+            "question")
+           ((string= env "parts")
+            "part")
+           ((string= env "subparts")
+            "subpart")
+           ((string= env "subsubparts")
+            "subsubpart")
+           ((member env '("choices" "oneparchoices"
+                          "checkboxes" "oneparcheckboxes"))
+            "choice")
+           ;; Fallback
+           (t "item")))))
 
 (defun LaTeX-exam-insert-label (_optional &optional name type)
   "Indent the line and query/insert a label incl. the \"\\label\" macro.
@@ -94,6 +101,10 @@ Arguments NAME and TYPE are the same as for the function
    (LaTeX-add-environments
     '("solution" [ "Height" ])
     '("select")
+    '("choices" LaTeX-env-item)
+    '("oneparchoices" LaTeX-env-item)
+    '("checkboxes" LaTeX-env-item)
+    '("oneparcheckboxes" LaTeX-env-item)
     '("solutionorbox" [ "Height" ])
     '("solutionorlines" [ "Height" ])
     '("solutionordottedlines" [ "Height" ])
@@ -104,82 +115,56 @@ Arguments NAME and TYPE are the same as for the function
     '("subsubparts" LaTeX-env-item))
 
    ;; Tell AUCTeX about special environments:
-   (let ((envs '("questions" "parts" "subparts" "subsubparts")))
+   (let ((envs '("questions"
+                 "parts"      "subparts"         "subsubparts"
+                 "choices"    "oneparchoices"
+                 "checkboxes" "oneparcheckboxes")))
      (dolist (env envs)
        (add-to-list 'LaTeX-item-list
-                    (cons env 'LaTeX-exam-insert-item))))
+                    (cons env #'LaTeX-exam-insert-item)
+                    t)))
 
    ;; Append us only once:
    (unless (and (string-match "question" LaTeX-item-regexp)
-                (string-match "subsub" LaTeX-item-regexp))
+                (string-match "sub" LaTeX-item-regexp))
      (set (make-local-variable 'LaTeX-item-regexp)
           (concat
            LaTeX-item-regexp
            "\\|"
+           "choice\\b"
+           "\\|"
            "\\(titled\\)?question\\b"
            "\\|"
-           "\\(sub\\|subsub\\)?part\\b"))
+           "\\(sub\\)*part\\b"))
      (LaTeX-set-paragraph-start))
 
    (TeX-add-symbols
     '("part" [ "Points" ] (TeX-arg-literal " "))
     '("subpart" [ "Points" ] (TeX-arg-literal " "))
     '("gradetable"
-      [ TeX-arg-eval completing-read
-                     (TeX-argument-prompt optional nil "Orientation")
-                     '("v" "h") ]
-      [ TeX-arg-eval completing-read
-                     (TeX-argument-prompt optional nil "Table index")
-                     '("questions" "pages") ] )
+      [TeX-arg-completing-read ("v" "h") "Orientation"]
+      [TeX-arg-completing-read ("questions" "pages") "Table index"])
     '("bonusgradetable"
-      [ TeX-arg-eval completing-read
-                     (TeX-argument-prompt optional nil "Orientation")
-                     '("v" "h") ]
-      [ TeX-arg-eval completing-read
-                     (TeX-argument-prompt optional nil "Table index")
-                     '("questions" "pages") ] )
+      [TeX-arg-completing-read ("v" "h") "Orientation"]
+      [TeX-arg-completing-read ("questions" "pages") "Table index"])
     '("bonuspointtable"
-      [ TeX-arg-eval completing-read
-                     (TeX-argument-prompt optional nil "Orientation")
-                     '("v" "h") ]
-      [ TeX-arg-eval completing-read
-                     (TeX-argument-prompt optional nil "Table index")
-                     '("questions" "pages") ] )
+      [TeX-arg-completing-read ("v" "h") "Orientation"]
+      [TeX-arg-completing-read ("questions" "pages") "Table index"])
     '("partialgradetable"
-      [ TeX-arg-eval completing-read
-                     (TeX-argument-prompt optional nil "Orientation")
-                     '("v" "h") ]
-      [ TeX-arg-eval completing-read
-                     (TeX-argument-prompt optional nil "Table index")
-                     '("questions" "pages") ] )
+      [TeX-arg-completing-read ("v" "h") "Orientation"]
+      [TeX-arg-completing-read ("questions" "pages") "Table index"])
     '("partialbonusgradetable"
-      [ TeX-arg-eval completing-read
-                     (TeX-argument-prompt optional nil "Orientation")
-                     '("v" "h") ]
-      [ TeX-arg-eval completing-read
-                     (TeX-argument-prompt optional nil "Table index")
-                     '("questions" "pages") ] )
+      [TeX-arg-completing-read ("v" "h") "Orientation"]
+      [TeX-arg-completing-read ("questions" "pages") "Table index"])
     '("partialbonuspointtable"
-      [ TeX-arg-eval completing-read
-                     (TeX-argument-prompt optional nil "Orientation")
-                     '("v" "h") ]
-      [ TeX-arg-eval completing-read
-                     (TeX-argument-prompt optional nil "Table index")
-                     '("questions" "pages") ] )
+      [TeX-arg-completing-read ("v" "h") "Orientation"]
+      [TeX-arg-completing-read ("questions" "pages") "Table index"])
     '("pointtable"
-      [ TeX-arg-eval completing-read
-                     (TeX-argument-prompt optional nil "Orientation")
-                     '("v" "h") ]
-      [ TeX-arg-eval completing-read
-                     (TeX-argument-prompt optional nil "Table index")
-                     '("questions" "pages") ] )
+      [TeX-arg-completing-read ("v" "h") "Orientation"]
+      [TeX-arg-completing-read ("questions" "pages") "Table index"])
     '("partialpointtable"
-      [ TeX-arg-eval completing-read
-                     (TeX-argument-prompt optional nil "Orientation")
-                     '("v" "h") ]
-      [ TeX-arg-eval completing-read
-                     (TeX-argument-prompt optional nil "Table index")
-                     '("questions" "pages") ] )
+      [TeX-arg-completing-read ("v" "h") "Orientation"]
+      [TeX-arg-completing-read ("questions" "pages") "Table index"])
 
     '("subsubpart" [ "Points" ] (TeX-arg-literal " "))
     '("question"  ["Points"] (TeX-arg-literal " "))
@@ -229,7 +214,7 @@ Arguments NAME and TYPE are the same as for the function
     '("checkboxchar" 1)
     '("checkboxeshook" 0)
     '("checkedchar" 1)
-    '("choice" 0)
+    '("choice" (TeX-arg-literal " "))
     '("choicelabel" 0)
     '("choiceshook" 0)
     '("chpgword" 1)
@@ -284,9 +269,9 @@ Arguments NAME and TYPE are the same as for the function
     '("hqword" 1)
     '("hsword" 1)
     '("htword" 1)
-    '("ifcontinuation" 0)
-    '("ifincomplete" 0)
-    '("iflastpage" 0)
+    '("ifcontinuation" 2)
+    '("ifincomplete" 2)
+    '("iflastpage" 2)
     '("ifprintanswers" 0)
     '("lfoot" 1)
     '("lhead" 1)
@@ -374,6 +359,14 @@ Arguments NAME and TYPE are the same as for the function
     )
    (LaTeX-add-lengths "answerlinelength" "answerskip")
 
+   ;; Don't increase indentation at various \if* macros:
+   (let ((exceptions '("ifcontinuation"
+                       "ifincomplete"
+                       "iflastpage")))
+     (dolist (elt exceptions)
+       (add-to-list 'LaTeX-indent-begin-exceptions-list elt t))
+     (LaTeX-indent-commands-regexp-make))
+
    ;; Fontification
    (when (and (featurep 'font-latex)
               (eq TeX-install-font-lock 'font-latex-setup))
@@ -382,6 +375,6 @@ Arguments NAME and TYPE are the same as for the function
                                 ("subpart"         "[")
                                 ("subsubpart"      "["))
                               'textual)))
- LaTeX-dialect)
+ TeX-dialect)
 
 ;;; exam.el ends here

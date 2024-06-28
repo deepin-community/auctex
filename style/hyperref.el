@@ -1,6 +1,6 @@
-;;; hyperref.el --- AUCTeX style for `hyperref.sty' v6.83m
+;;; hyperref.el --- AUCTeX style for `hyperref.sty' v6.83m  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2008, 2013--2019 Free Software Foundation, Inc.
+;; Copyright (C) 2008, 2013-2022 Free Software Foundation, Inc.
 
 ;; Author: Ralf Angeli <angeli@caeruleus.net>
 ;; Maintainer: auctex-devel@gnu.org
@@ -30,17 +30,19 @@
 
 ;;; Code:
 
+(require 'tex)
+(require 'latex)
+
 ;; Silence the compiler:
 (declare-function font-latex-add-keywords
-		  "font-latex"
-		  (keywords class))
+                  "font-latex"
+                  (keywords class))
 
-(declare-function font-latex-update-font-lock
-		  "font-latex"
-		  (&optional syntactic-kws))
+(declare-function font-latex-set-syntactic-keywords
+                  "font-latex")
 
 (defvar LaTeX-hyperref-package-options-list
-  '(;; See https://www.tug.org/applications/hyperref/manual.html#x1-40003
+  '(;; See https://mirrors.ctan.org/macros/latex/contrib/hyperref/doc/hyperref-doc.html#x1-110005
     ;; General options
     ("draft" ("true" "false"))
     ("final" ("true" "false"))
@@ -162,8 +164,7 @@
     ("nextactionraw"))
   "Key=value options for href macro of the hyperref package.")
 
-;; See https://www.tug.org/applications/hyperref/ftp/doc/manual.html#x1-220006.2
-
+;; See https://mirrors.ctan.org/macros/latex/contrib/hyperref/doc/hyperref-doc.html#x1-600009.2
 (defvar LaTeX-hyperref-forms-options
   '(("accesskey")
     ("align"          ("0" "1" "2"))
@@ -171,16 +172,12 @@
     ("backgroundcolor")
     ("bordercolor")
     ("bordersep")
-    ("borderwidth")
-    ;; "borderstyle" is not mentioned in the original hyperref-doc, it
-    ;; can be seen in action in
-    ;; http://mirrors.ctan.org/macros/latex/contrib/hyperref/test/testform.tex
-    ;; S=Solid (default), D=Dashed, B=Beveled, I=Inset, U=Underline
     ("borderstyle"    ("S" "D" "B" "I" "U"))
+    ("borderwidth")
     ("calculate")
     ("charsize")
-    ("checkboxsymbol" ("true" "false"))
-    ("checked")
+    ("checkboxsymbol")
+    ("checked"        ("true" "false"))
     ("color")
     ("combo"          ("true" "false"))
     ("default")
@@ -229,7 +226,7 @@
 
    (TeX-add-symbols
     '("hypersetup" (TeX-arg-key-val LaTeX-hyperref-package-options-list))
-    '("href" [ (TeX-arg-key-val LaTeX-hyperref-href-options) ] "URL" "Text")
+    '("href" [TeX-arg-key-val LaTeX-hyperref-href-options] "URL" "Text")
     ;; Completion for \url is provided via url.el.  Hence the entry in
     ;; this style is commented:
     ;; '("url" "URL" ignore)
@@ -237,7 +234,10 @@
     '("hyperbaseurl" t)
     '("hyperimage" "Image URL" "Text")
     '("hyperdef" "Category" "Name" "Text")
-    '("hyperref" "URL" "Category" "Name" "Text")
+    '("hyperref"
+      (TeX-arg-conditional (y-or-n-p "Insert a label and text? ")
+          ([TeX-arg-ref] "Text")
+        ("URL" "Category" "Name" "Text")))
     '("hyperlink" "Name" "Text")
     '("hypertarget" "Name" "Text")
     '("phantomsection" 0)
@@ -257,13 +257,13 @@
     '("Acrobatmenu" "Menu option" "Text")
     ;; The next 6 macros take Key-vals defined in
     ;; "LaTeX-hyperref-forms-options".  For an example, see
-    ;; http://mirrors.ctan.org/macros/latex/contrib/hyperref/test/testform.tex
-    '("TextField"  [ (TeX-arg-key-val LaTeX-hyperref-forms-options) ] "Label")
-    '("CheckBox"   [ (TeX-arg-key-val LaTeX-hyperref-forms-options) ] "Label")
-    '("ChoiceMenu" [ (TeX-arg-key-val LaTeX-hyperref-forms-options) ] "Label" "Choices")
-    '("PushButton" [ (TeX-arg-key-val LaTeX-hyperref-forms-options) ] "Label")
-    '("Submit"     [ (TeX-arg-key-val LaTeX-hyperref-forms-options) ] "Label")
-    '("Reset"      [ (TeX-arg-key-val LaTeX-hyperref-forms-options) ] "Label")
+    ;; https://github.com/latex3/hyperref/blob/main/test/testform.tex
+    '("TextField"  [TeX-arg-key-val LaTeX-hyperref-forms-options] "Label")
+    '("CheckBox"   [TeX-arg-key-val LaTeX-hyperref-forms-options] "Label")
+    '("ChoiceMenu" [TeX-arg-key-val LaTeX-hyperref-forms-options] "Label" "Choices")
+    '("PushButton" [TeX-arg-key-val LaTeX-hyperref-forms-options] "Label")
+    '("Submit"     [TeX-arg-key-val LaTeX-hyperref-forms-options] "Label")
+    '("Reset"      [TeX-arg-key-val LaTeX-hyperref-forms-options] "Label")
     '("LayoutTextField" "Label" "Field")
     '("LayoutChoiceField" "Label" "Field")
     '("LayoutCheckField" "Label" "Field")
@@ -271,63 +271,83 @@
     '("MakeCheckField" "Width" "Height")
     '("MakeTextField" "Width" "Height")
     '("MakeChoiceField" "Width" "Height")
-    '("MakeButtonField" "Text"))
+    '("MakeButtonField" "Text")
+    ;; The macro version of the 'Form' environment:
+    '("Form" 0))
 
    ;; Form fields must be inside a "Form"-env, one per file is allowed, cf.
-   ;; https://www.tug.org/applications/hyperref/ftp/doc/manual.html#x1-200006
-   ;; It is up to user to insert [<options>] after \begin{Form}
+   ;; https://mirrors.ctan.org/macros/latex/contrib/hyperref/doc/hyperref-doc.html#x1-590009.1
    (LaTeX-add-environments
-    '("Form"))
+    '("Form" LaTeX-env-args [TeX-arg-key-val (("action")
+                                              ("encoding" ("html"))
+                                              ("method"   ("post" "get")))])
+    "NoHyper")
 
    ;; Do not indent the content of the "Form"-env; it is odd if the
    ;; whole document is indented.  Append it to a local version of
    ;; `LaTeX-document-regexp':
    (unless (string-match-p "Form" LaTeX-document-regexp)
      (set (make-local-variable 'LaTeX-document-regexp)
-	  (concat LaTeX-document-regexp "\\|" "Form")))
+          (concat LaTeX-document-regexp "\\|" "Form")))
 
    (add-to-list 'LaTeX-verbatim-macros-with-braces-local "nolinkurl")
    (add-to-list 'LaTeX-verbatim-macros-with-braces-local "hyperbaseurl")
    (add-to-list 'LaTeX-verbatim-macros-with-braces-local "hyperimage")
-   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "hyperref")
+   ;; "hyperref" macros is not added here since it takes different
+   ;; number of arguments depending on a given optional argument.
+   ;; The first mandatory argument is not necessarily a verbatim one.
+   ;; (add-to-list 'LaTeX-verbatim-macros-with-braces-local "hyperref")
    (add-to-list 'LaTeX-verbatim-macros-with-braces-local "href")
 
-   ;; In hyperref package, \url macro is redefined and \url|...| can't be used,
-   ;; while it's possible when only url package (required by hyperref) is loaded
+   ;; In hyperref package, \url macro is redefined and \url|...| can't
+   ;; be used, while it's possible when only url package (required by
+   ;; hyperref) is loaded
    (setq LaTeX-verbatim-macros-with-delims-local
-	 (remove "url"  LaTeX-verbatim-macros-with-delims-local))
+         (remove "url" LaTeX-verbatim-macros-with-delims-local))
 
    ;; Fontification
    (when (and (featurep 'font-latex)
-	      (eq TeX-install-font-lock 'font-latex-setup))
+              (eq TeX-install-font-lock 'font-latex-setup))
      (font-latex-add-keywords '(("href" "[{{")
-				("nolinkurl" "{")
-				("hyperbaseurl" "{")
-				("hyperimage" "{{")
-				("hyperdef" "{{{")
-				("hyperref" "{{{{")
-				("hyperlink" "{{")
-				("hypertarget" "{{")
-				("autoref" "*{")
-				("ref" "*{")
-				("pageref" "*{")
-				("autopageref" "*{"))
-			      'reference)
+                                ("nolinkurl" "{")
+                                ("hyperbaseurl" "{")
+                                ("hyperimage" "{{")
+                                ("hyperdef" "{{{")
+                                ;; Fontify only the minimum set of args:
+                                ("hyperref" "[{")
+                                ("hyperlink" "{{")
+                                ("hypertarget" "{{")
+                                ("autoref" "*{")
+                                ("ref" "*{")
+                                ("pageref" "*{")
+                                ("autopageref" "*{"))
+                              'reference)
      (font-latex-add-keywords '(("hypersetup" "{"))
-			      'function)
+                              'function)
      ;; For syntactic fontification, e.g. verbatim constructs.
-     (font-latex-update-font-lock t))
+     (font-latex-set-syntactic-keywords))
 
    ;; Option management
    (if (and (LaTeX-provided-package-options-member "hyperref" "dvipdfmx")
             (not (eq TeX-engine 'xetex)))
        (setq TeX-PDF-from-DVI "Dvipdfmx"))
 
+   ;; Loop over the possible options and load backref.el:
+   (let ((opts '("backref"
+                 "backref=section"
+                 "backref=slide"
+                 "backref=page"
+                 "pagebackref"
+                 "pagebackref=true")))
+     (dolist (opt opts)
+       (when (LaTeX-provided-package-options-member "hyperref" opt)
+         (TeX-run-style-hooks "backref"))))
+
    ;; Activate RefTeX reference style.
    (and LaTeX-reftex-ref-style-auto-activate
-	(fboundp 'reftex-ref-style-activate)
-	(reftex-ref-style-activate "Hyperref")))
- LaTeX-dialect)
+        (fboundp 'reftex-ref-style-activate)
+        (reftex-ref-style-activate "Hyperref")))
+ TeX-dialect)
 
 (defun LaTeX-hyperref-package-options ()
   "Read the hyperref package options from the user."

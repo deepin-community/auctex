@@ -1,6 +1,6 @@
-;;; footmisc.el --- AUCTeX style for `footmisc.sty'
+;;; footmisc.el --- AUCTeX style for `footmisc.sty'  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2011, 2018 Free Software Foundation, Inc.
+;; Copyright (C) 2011, 2018--2022 Free Software Foundation, Inc.
 
 ;; Author: Mads Jensen <mje@inducks.org>
 ;; Created: 2011-04-08
@@ -25,54 +25,86 @@
 
 ;;; Commentary:
 
-;; This file adds support for `footmisc.sty'.
+;; This file adds support for `footmisc.sty' (v6.0b) from 2022/02/14.
 
 ;;; Code:
 
+(require 'tex)
+(require 'latex)
+
 ;; Silence the compiler:
 (declare-function font-latex-add-keywords
-		  "font-latex"
-		  (keywords class))
+                  "font-latex"
+                  (keywords class))
+
+(defvar LaTeX-footmisc-fnsymbols-set '("bringhurst" "chicago" "wiley"
+                                       "lamport" "lamport*")
+  "Sets of footnote symbols provided by the footmisc package.")
 
 (TeX-add-style-hook
  "footmisc"
  (lambda ()
    (TeX-add-symbols
-    '("DefineFNsymbols" "Name" [ "Style (text or math) " ] 1) 
-    '("DefineFNsymbols*" "Name" [ "Style  (text or math)" ] 1)
+
+    ;; 1.4 Option ragged and \footnotelayout
+    "footnotelayout"
+
+    ;; 1.7 The \setfnsymbol and \DefineFNsymbols commands
+    '("DefineFNsymbols"
+      (TeX-arg-completing-read LaTeX-footmisc-fnsymbols-set "Name")
+      [TeX-arg-completing-read ("text" "math") "Style"]
+      1)
+    '("DefineFNsymbols*"
+      (TeX-arg-completing-read LaTeX-footmisc-fnsymbols-set "Name")
+      [TeX-arg-completing-read ("text" "math") "Style"]
+      1)
+
     ;; These two commands define both text and math variants of the
     ;; footnote symbols
-    '("DefineFNsymbolsTM" "Name" 1)
-    '("DefineFNsymbolsTM*" "Name" 1)
-    '("setfnsymbol" "Name")
-    '("mpfootnoterule" TeX-arg-size) 
-    "pagefootnoterule"
-    "splitfootnoterule"
-    ;; The following command references a label inside in a footnote
-    '("footref" TeX-arg-ref)
+    '("DefineFNsymbolsTM"
+      (TeX-arg-completing-read LaTeX-footmisc-fnsymbols-set "Name")
+      1)
+    '("DefineFNsymbolsTM*"
+      (TeX-arg-completing-read LaTeX-footmisc-fnsymbols-set "Name")
+      1)
+    '("setfnsymbol"
+      (TeX-arg-completing-read LaTeX-footmisc-fnsymbols-set "Name"))
+
+    ;; 1.11 Option hang
     "hangfootparskip"
     "hangfootparindent"
-    "footnotehint"
-    '("footnotemargin" TeX-arg-size)
-    "mpfootnoterule"
+
+    ;; 1.15 The multiple option
     "multiplefootnotemarker"
-    "multfootsep")
+    "multfootsep"
+
+    ;; 1.16 User interface
+    "mpfootnotemark")
+
+   ;; 1.9 Option marginal
+   (LaTeX-add-lengths "footnotemargin")
+
+   ;; 1.13 Option splitrule
+   (when (LaTeX-provided-package-options-member "footmisc" "splitrule")
+     (TeX-add-symbols "mpfootnoterule"
+                      "pagefootnoterule"
+                      "splitfootnoterule"))
 
    (when (and (featurep 'font-latex)
               (eq TeX-install-font-lock 'font-latex-setup))
-     (font-latex-add-keywords '(("DefineFNsymbols" "{[{")
-                                ("DefineFNsymbols*" "{[{")
-                                ("DefineFNsymbolsTM" "{{")
-                                ("DefineFNsymbolsTM*" "{{")
-        			("setfnsymbol" "{")) 'function)
-     (font-latex-add-keywords '(("footnoteref")) 'reference)))
- LaTeX-dialect)
+     (font-latex-add-keywords '(("DefineFNsymbols"   "*{[{")
+                                ("DefineFNsymbolsTM" "*{{")
+                                ("setfnsymbol"       "{"))
+                              'function)))
+ TeX-dialect)
 
 (defvar LaTeX-footmisc-package-options '("perpage" "side" "ragged"
                                          "para" "symbol" "symbol*"
                                          "marginal" "flushmargin" "hang"
                                          "norule" "splitrule" "stable"
-                                         "multiple")
+                                         "multiple"
+                                         "abovefloats" "belowfloats"
+                                         "bottom" "bottomfloats")
   "Package options for the footmisc package.")
 
 ;;; footmisc.el ends here

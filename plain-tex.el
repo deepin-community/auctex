@@ -1,6 +1,6 @@
-;;; plain-tex.el --- Support for plain TeX documents.
+;;; plain-tex.el --- Support for plain TeX documents. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2010, 2013, 2016-2018  Free Software Foundation, Inc.
+;; Copyright (C) 2010, 2013, 2016-2018, 2021-2022  Free Software Foundation, Inc.
 
 ;; Maintainer: auctex-devel@gnu.org
 ;; Keywords: tex
@@ -29,7 +29,6 @@
 ;;; Code:
 
 (require 'tex)
-(require 'tex-buf)
 
 ;;; Tool bar
 
@@ -40,8 +39,9 @@
 
 (defun plain-TeX-maybe-install-toolbar ()
   "Conditionally install tool bar buttons for plain TeX mode.
-Install tool bar if `plain-TeX-enable-toolbar' is non-nil."
-  (when plain-TeX-enable-toolbar
+Install tool bar if `plain-TeX-enable-toolbar' and
+`tool-bar-mode' are non-nil."
+  (when (and plain-TeX-enable-toolbar tool-bar-mode)
     ;; Defined in `tex-bar.el':
     (TeX-install-toolbar)))
 
@@ -105,7 +105,7 @@ Install tool bar if `plain-TeX-enable-toolbar' is non-nil."
 (defconst plain-TeX-dialect :plain-tex
   "Default dialect for use with function `TeX-add-style-hook' for
 argument DIALECT-EXPR when the hook is to be run only on
-plain-TeX file, or any mode derived thereof. See variable
+plain-TeX file, or any mode derived thereof.  See variable
 `TeX-style-hook-dialect'." )
 
 (defcustom plain-TeX-mode-hook nil
@@ -130,14 +130,10 @@ of `plain-TeX-mode-hook'."
   (plain-TeX-common-initialization)
   (setq major-mode 'plain-tex-mode)
   (use-local-map plain-TeX-mode-map)
-  (easy-menu-add plain-TeX-mode-menu plain-TeX-mode-map)
-  (easy-menu-add plain-TeX-mode-command-menu plain-TeX-mode-map)
   (setq TeX-base-mode-name "TeX")
   (setq TeX-command-default "TeX")
-  (setq TeX-sentinel-default-function 'TeX-TeX-sentinel)
-  (add-hook 'tool-bar-mode-on-hook 'plain-TeX-maybe-install-toolbar nil t)
-  (when (and (boundp 'tool-bar-mode) tool-bar-mode)
-    (plain-TeX-maybe-install-toolbar))
+  (add-hook 'tool-bar-mode-hook #'plain-TeX-maybe-install-toolbar nil t)
+  (plain-TeX-maybe-install-toolbar)
   (run-mode-hooks 'text-mode-hook 'TeX-mode-hook 'plain-TeX-mode-hook)
   (TeX-set-mode-name))
 
@@ -147,37 +143,38 @@ of `plain-TeX-mode-hook'."
   (set-syntax-table TeX-mode-syntax-table)
   (setq local-abbrev-table plain-tex-mode-abbrev-table)
   (set (make-local-variable 'TeX-style-hook-dialect) plain-TeX-dialect)
+  (setq TeX-sentinel-default-function #'TeX-TeX-sentinel)
   (setq paragraph-start
-	(concat
-	 "\\(?:[ \t]*$"
-	 "\\|" (regexp-quote TeX-esc) "par\\|"
-	 "[ \t]*"
-	 (regexp-quote TeX-esc)
-	 "\\(?:"
-	 "begin\\|end\\|part\\|chapter\\|"
-	 "section\\|subsection\\|subsubsection\\|"
-	 "paragraph\\|include\\|includeonly\\|"
-	 "tableofcontents\\|appendix\\|label\\|caption\\|\\(?:item\\)?item"
-	 "\\)"
-	 "\\|"
-	 "[ \t]*\\$\\$"		; display math delimitor
-	 "\\)" ))
+        (concat
+         "\\(?:[ \t]*$"
+         "\\|" (regexp-quote TeX-esc) "par\\|"
+         "[ \t]*"
+         (regexp-quote TeX-esc)
+         "\\(?:"
+         "begin\\|end\\|part\\|chapter\\|"
+         "section\\|subsection\\|subsubsection\\|"
+         "paragraph\\|include\\|includeonly\\|"
+         "tableofcontents\\|appendix\\|label\\|caption\\|\\(?:item\\)?item"
+         "\\)"
+         "\\|"
+         "[ \t]*\\$\\$"         ; display math delimitor
+         "\\)" ))
   (setq paragraph-separate
-	(concat
-	 "[ \t]*"
-	 "\\(?:"
-	 (regexp-quote TeX-esc) "par\\|"
-	 "%\\|"
-	 "$\\|"
-	 "\\$\\$\\|"
-	 (regexp-quote TeX-esc)
-	 "\\(?:"
-	 "begin\\|end\\|label\\|caption\\|part\\|chapter\\|"
-	 "section\\|subsection\\|subsubsection\\|"
-	 "paragraph\\|include\\|includeonly\\|"
-	 "tableofcontents\\|appendix\\|" (regexp-quote TeX-esc)
-	 "\\)"
-	 "\\)"))
+        (concat
+         "[ \t]*"
+         "\\(?:"
+         (regexp-quote TeX-esc) "par\\|"
+         "%\\|"
+         "$\\|"
+         "\\$\\$\\|"
+         (regexp-quote TeX-esc)
+         "\\(?:"
+         "begin\\|end\\|label\\|caption\\|part\\|chapter\\|"
+         "section\\|subsection\\|subsubsection\\|"
+         "paragraph\\|include\\|includeonly\\|"
+         "tableofcontents\\|appendix\\|" (regexp-quote TeX-esc)
+         "\\)"
+         "\\)"))
   (setq TeX-header-end (regexp-quote "%**end of header"))
   (setq TeX-trailer-start (regexp-quote (concat TeX-esc "bye")))
   (TeX-add-symbols
@@ -256,14 +253,14 @@ of `plain-TeX-mode-hook'."
   TeX-clean-default-intermediate-suffixes
   "List of regexps matching suffixes of intermediate files to be deleted.
 The regexps will be anchored at the end of the file name to be matched,
-i.e. you do _not_ have to cater for this yourself by adding \\\\' or $."
+that is, you do _not_ have to cater for this yourself by adding \\\\\\=' or $."
   :type '(repeat regexp)
   :group 'TeX-command)
 
 (defcustom plain-TeX-clean-output-suffixes TeX-clean-default-output-suffixes
   "List of regexps matching suffixes of output files to be deleted.
 The regexps will be anchored at the end of the file name to be matched,
-i.e. you do _not_ have to cater for this yourself by adding \\\\' or $."
+that is, you do _not_ have to cater for this yourself by adding \\\\\\=' or $."
   :type '(repeat regexp)
   :group 'TeX-command)
 
@@ -308,10 +305,6 @@ of `AmS-TeX-mode-hook'."
   (setq major-mode 'ams-tex-mode)
   (use-local-map AmSTeX-mode-map)
 
-  ;; Menu
-  (easy-menu-add AmSTeX-mode-menu AmSTeX-mode-map)
-  (easy-menu-add AmSTeX-mode-command-menu AmSTeX-mode-map)
-
   (setq TeX-base-mode-name "AmS-TeX")
   (setq TeX-command-default "AmSTeX")
   (run-mode-hooks 'text-mode-hook 'TeX-mode-hook 'AmS-TeX-mode-hook)
@@ -321,14 +314,14 @@ of `AmS-TeX-mode-hook'."
   TeX-clean-default-intermediate-suffixes
   "List of regexps matching suffixes of intermediate files to be deleted.
 The regexps will be anchored at the end of the file name to be matched,
-i.e. you do _not_ have to cater for this yourself by adding \\\\' or $."
+that is, you do _not_ have to cater for this yourself by adding \\\\\\=' or $."
   :type '(repeat regexp)
   :group 'TeX-command)
 
 (defcustom AmSTeX-clean-output-suffixes TeX-clean-default-output-suffixes
   "List of regexps matching suffixes of output files to be deleted.
 The regexps will be anchored at the end of the file name to be matched,
-i.e. you do _not_ have to cater for this yourself by adding \\\\' or $."
+that is, you do _not_ have to cater for this yourself by adding \\\\\\=' or $."
   :type '(repeat regexp)
   :group 'TeX-command)
 

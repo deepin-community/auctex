@@ -1,6 +1,6 @@
-;;; context-test.el --- tests for ConTeXt mode
+;;; context-test.el --- tests for ConTeXt mode  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2017 Free Software Foundation, Inc.
+;; Copyright (C) 2017-2021  Free Software Foundation, Inc.
 
 ;; This file is part of AUCTeX.
 
@@ -23,6 +23,12 @@
 
 (require 'ert)
 (require 'context)
+
+;; We need to ensure that font-lock has put the syntax properties
+;; already which won't happen in batch mode.  So trigger font-lock
+;; immediately.
+(define-advice ConTeXt-mode-common-initialization (:after ())
+  (font-lock-ensure))
 
 (AUCTeX-set-ert-path
  'ConTeXt-indent-test/in

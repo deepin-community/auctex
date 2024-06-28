@@ -1,6 +1,6 @@
-;;; path-expansion.el --- tests for path expansion
+;;; path-expansion.el --- tests for path expansion  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2017 Free Software Foundation, Inc.
+;; Copyright (C) 2017-2021  Free Software Foundation, Inc.
 
 ;; This file is part of AUCTeX.
 
@@ -25,11 +25,12 @@
 
 (ert-deftest TeX-variable-truncation ()
   "Check whether list variable is not truncated as side effect."
-  (let ((var '("str1" "str2"))
-	(TeX-kpathsea-path-delimiter nil)
-	(TeX-search-files-type-alist
-	 '((abc "${dummy}" ("str2" var) TeX-file-extensions))))
+  (defvar TeX--var)
+  (let ((TeX--var '("str1" "str2"))
+        (TeX-kpathsea-path-delimiter nil)
+        (TeX-search-files-type-alist
+         '((abc "${dummy}" ("str2" TeX--var) TeX-file-extensions))))
     (TeX-search-files-by-type 'abc 'global)
-    (should (equal var '("str1" "str2")))))
+    (should (equal TeX--var '("str1" "str2")))))
 
 ;;; path-expansion.el ends here

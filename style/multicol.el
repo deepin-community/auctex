@@ -1,6 +1,6 @@
-;;; multicol.el --- AUCTeX style for `multicol.sty'
+;;; multicol.el --- AUCTeX style for `multicol.sty'  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2011 Free Software Foundation, Inc.
+;; Copyright (C) 2011, 2020, 2021 Free Software Foundation, Inc.
 
 ;; Author: Mads Jensen <mje@inducks.org>
 ;; Maintainer: auctex-devel@gnu.org
@@ -26,9 +26,17 @@
 
 ;;; Commentary:
 
-;; This file adds support for `multicol.sty'.
+;; This file adds support for `multicol.sty' v1.9b from 2021/10/28.
 
 ;;; Code:
+
+(require 'tex)
+(require 'latex)
+
+;; Silence the compiler:
+(declare-function font-latex-add-keywords
+                  "font-latex"
+                  (keywords class))
 
 (TeX-add-style-hook
  "multicol"
@@ -40,24 +48,45 @@
       [ "Local value for \\premulticols" ]))
 
    (TeX-add-symbols
-    '("multicoltolerance" 0)
-    '("multicolpretolerance" 0)
-    '("premulticols" 0)
-    '("postmulticols" 0)
-    '("multicolsep" 0)
-    '("multicolbaselineskip" 0)
-    '("multicolovershoot" 0)
-    '("multicolundershoot" 0)
-    '("columnsep" 0)
-    '("columnseprule" 0)
-    '("columnseprulecolor" 0)
+    '("multicoltolerance"    (TeX-arg-literal " = "))
+    '("multicolpretolerance" (TeX-arg-literal " = "))
+    "columnseprulecolor"
     '("raggedcolumns" 0)
-    '("flushcolumns" 0)
-    "columnbreak"))
- LaTeX-dialect)
+    '("flushcolumns"  0)
+    ;; 2.3 Manually breaking columns
+    '("newcolumn"     0)
+    '("columnbreak"   [ "How much [0 - 4]" ])
+
+    ;; Preface to version 1.7
+    "RLmulticolcolumns"
+    "LRmulticolcolumns")
+
+   ;; Preface to version 1.8
+   (when (LaTeX-provided-package-options-member "multicol" "colaction")
+     (TeX-add-symbols '("docolaction" 3)))
+
+   (LaTeX-add-lengths "premulticols"
+                      "postmulticols"
+                      "multicolsep"
+                      "multicolbaselineskip"
+                      "multicolovershoot"
+                      "multicolundershoot")
+
+   (LaTeX-add-counters "collectmore")
+
+   ;; Fontification
+   (when (and (featurep 'font-latex)
+              (eq TeX-install-font-lock 'font-latex-setup))
+     (font-latex-add-keywords '(("columnbreak"       "")
+                                ("newcolumn"         "")
+                                ("LRmulticolcolumns" "")
+                                ("RLmulticolcolumns" ""))
+                              'warning)))
+ TeX-dialect)
 
 (defvar LaTeX-multicol-package-options
-  '("errorshow" "infoshow" "balancingshow" "markshow" "debugshow" "grid")
+  '("errorshow" "infoshow" "balancingshow" "markshow" "debugshow"
+    "grid" "colaction")
   "Package options for the multicol package.")
 
 ;;; multicol.el ends here

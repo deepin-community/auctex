@@ -1,6 +1,6 @@
-;;; array.el --- AUCTeX style for `array.sty'
+;;; array.el --- AUCTeX style for `array.sty'  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2013, 2015, 2018, 2019 Free Software Foundation, Inc.
+;; Copyright (C) 2013-2022  Free Software Foundation, Inc.
 
 ;; Author: Mads Jensen <mje@inducks.org>
 ;; Maintainer: auctex-devel@gnu.org
@@ -30,11 +30,12 @@
 ;;; Code:
 
 (require 'tex)
+(require 'latex)
 
 ;; Silence the compiler:
 (declare-function font-latex-add-keywords
-		  "font-latex"
-		  (keywords class))
+                  "font-latex"
+                  (keywords class))
 
 (TeX-auto-add-type "array-newcolumntype" "LaTeX")
 
@@ -46,7 +47,7 @@ package.")
 
 (defun LaTeX-array-auto-prepare ()
   "Clear `LaTeX-auto-array-newcolumntype' before parsing."
-  (setq	LaTeX-auto-array-newcolumntype nil))
+  (setq LaTeX-auto-array-newcolumntype nil))
 
 (defun LaTeX-array-auto-cleanup ()
   "Move parsed column specification from
@@ -55,16 +56,11 @@ package.")
     (LaTeX-array-update-column-letters)))
 
 (defun LaTeX-array-update-column-letters ()
-  "Update and uniquify the value of `LaTeX-array-column-letters'
-and make it buffer local. "
+  "Update and uniquify the local value of `LaTeX-array-column-letters'."
   (set (make-local-variable 'LaTeX-array-column-letters)
-       (mapconcat 'identity
-		  (TeX-delete-duplicate-strings
-		   (split-string
-		    (concat LaTeX-array-column-letters
-			    (mapconcat #'car (LaTeX-array-newcolumntype-list) ""))
-		    "" t))
-		  "")))
+       (let* ((newtypes (mapconcat #'car (LaTeX-array-newcolumntype-list) ""))
+              (alltypes (concat LaTeX-array-column-letters newtypes)))
+         (seq-concatenate 'string (seq-uniq alltypes #'=)))))
 
 (add-hook 'TeX-auto-prepare-hook #'LaTeX-array-auto-prepare t)
 (add-hook 'TeX-auto-cleanup-hook #'LaTeX-array-auto-cleanup t)
@@ -77,13 +73,13 @@ and make it buffer local. "
    (TeX-auto-add-regexp LaTeX-array-newcolumntype-regexp)
 
    (TeX-add-symbols
-    '("newcolumntype"
-      (TeX-arg-eval
-       (lambda ()
-	 (let ((col (TeX-read-string "Column type: ")))
-	   (LaTeX-add-array-newcolumntypes col)
-	   (LaTeX-array-update-column-letters)
-	   (format "%s" col))))
+    `("newcolumntype"
+      ,(lambda (optional)
+         (let ((col (TeX-read-string
+                     (TeX-argument-prompt optional nil "Column type"))))
+           (LaTeX-add-array-newcolumntypes col)
+           (LaTeX-array-update-column-letters)
+           (TeX-argument-insert col optional)))
       [ "Number of arguments" ] t)
     '("showcols" 0)
     '("firsthline" 0)
@@ -95,14 +91,14 @@ and make it buffer local. "
 
    ;; `array.sty' adds some new column specification letters.
    (set (make-local-variable 'LaTeX-array-column-letters)
-	(concat LaTeX-array-column-letters "m" "b" "w" "W"))
+        (concat LaTeX-array-column-letters "m" "b" "w" "W"))
 
    ;; Fontification
    (when (and (featurep 'font-latex)
-	      (eq TeX-install-font-lock 'font-latex-setup))
+              (eq TeX-install-font-lock 'font-latex-setup))
      (font-latex-add-keywords '(("newcolumntype" "{[{"))
-			      'function)))
- LaTeX-dialect)
+                              'function)))
+ TeX-dialect)
 
 (defvar LaTeX-array-package-options nil
   "Package options for array.")

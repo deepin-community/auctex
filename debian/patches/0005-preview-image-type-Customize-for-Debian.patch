@@ -14,15 +14,15 @@ Forwarded: not-needed
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/preview.el.in b/preview.el.in
-index 89b767a..fa42a26 100644
+index e26f478..3eee565 100644
 --- a/preview.el.in
 +++ b/preview.el.in
-@@ -221,7 +221,7 @@ method, like when PDFTeX was used."
- 		       (symbol :tag "Emacs image-type")
- 		       (repeat :inline t :tag "Ghostscript options" string))))
+@@ -223,7 +223,7 @@ method, like when PDFTeX was used."
+                        (symbol :tag "Emacs image-type")
+                        (repeat :inline t :tag "Ghostscript options" string))))
  
 -(defcustom preview-image-type 'png
 +(defcustom preview-image-type (if (executable-find "dvipng") 'dvipng 'png)
-   "*Image type to be used in images."
+   "Image type to be used in images."
    :group 'preview-gs
    :type (append '(choice)

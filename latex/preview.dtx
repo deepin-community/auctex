@@ -3,7 +3,7 @@
 %%    Developed as part of AUCTeX <URL:https://www.gnu.org/software/auctex/>.
 %
 %     Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006,
-%                   2010, 2017-2019 Free Software Foundation
+%                   2010, 2017-2023 Free Software Foundation
 %
 %     This program is free software; you can redistribute it and/or modify
 %     it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 %     Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
 %     Boston, MA 02110-1301  USA
 % \fi
-% \CheckSum{1760}
+% \CheckSum{1758}
 % \GetFileInfo{preview.sty}
 % \date{\filedate}
 % \author{David Kastrup\thanks{\texttt{bug-auctex@gnu.org}}}
@@ -137,7 +137,7 @@
 % \item[|textmath|] will make all text math subject to previews.
 %   Since math mode is used throughly inside of \LaTeX\ even for other
 %   purposes, this works by redefining \cmd\(, \cmd\)
-%   and |$| and the |math| environment (apparently some people use
+%   and |$| and the |math| environment (apparently some people use ^^A$
 %   that).  Only occurences of these text math delimiters in later
 %   loaded packages and in the main document will thus be affected.
 % \item[|graphics|] will subject all \cmd{\includegraphics} commands
@@ -429,26 +429,19 @@
 %
 % \StopEventually{}
 % \section{The Implementation}
-% Here we go: the start is somewhat obtuse since we figure out version
-% number and date from RCS strings.  This should really be done at
+% We provide version and date manually.  This should really be done at
 % docstrip time instead.  Takers?
 % \begin{macro}{\pr@version}
+% \begin{macro}{\pr@date}
 %    \begin{macrocode}
 %<*style>
 %<*!active>
-\NeedsTeXFormat{LaTeX2e} \def\reserved@a #1#2$#3:
-#4${\xdef#1{\reserved@c #2#4 $}} \def\reserved@c #1 #2${#1}
-\begingroup \catcode`\_=12
-\reserved@a\pr@version $Name: release_12_2 $ \ifx\pr@version\@empty
-\reserved@a\pr@version CVS-$Revision: 1.126 $ \endgroup \else
-  \def\next release_{} \lccode`\_=`.
-  \edef\next{\lowercase{\endgroup
-    \def\noexpand\pr@version{\expandafter\next\pr@version}}} \next \fi
-\reserved@a\next $Date: 2017/04/24 13:20:00 $
-\edef\next{\noexpand\ProvidesPackage{preview}%
-  [\next\space \pr@version\space (AUCTeX/preview-latex)]}
-\next
+\NeedsTeXFormat{LaTeX2e}
+\def\pr@version{13.2}
+\def\pr@date{2023/01/17}
+\ProvidesPackage{preview}[\pr@date\space \pr@version\space (AUCTeX/preview-latex)]
 %    \end{macrocode}
+% \end{macro}
 % \end{macro}
 % Since many parts here will not be needed as long as the package is
 % inactive, we will include them enclosed with |<*active>| and
@@ -781,12 +774,39 @@
 % pretty much the same as in |everyshi.sty|.  One of its implications
 % is that if someone does a \cmd{\shipout} of a \emph{void} box,
 % things will go horribly wrong.
-% \begin{macro}{\shipout}
+% \begin{macro}{\pr@@shipout}
 %    \begin{macrocode}
-\let\pr@shipout=\shipout
-\def\shipout{\deadcycles\z@\bgroup\setbox\z@\box\voidb@x
+\def\pr@@shipout{\deadcycles\z@\bgroup\setbox\z@\box\voidb@x
   \afterassignment\pr@shipoutegroup\setbox\z@}
 \def\pr@shipoutegroup{\ifvoid\z@ \expandafter\aftergroup\fi \egroup}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\pr@shipout}
+%   We now need to check which command we are replacing.  Before
+%   things got sophisticated in 2020 or 2021, this had been
+%   \cmd{\shipout} but now it could be \cmd{\tex\_shipout:D}.  \LaTeX\
+%   got a hook mechanism for managing output routines, but it doesn't
+%   really work well for wholesale replacement of the \cmd{\shipout}
+%   command like |preview| does.
+%    \begin{macrocode}
+\ifx\shipout\@undefined
+  \begingroup
+  \catcode`\:=10
+  \catcode`\_=10
+  \ifx\tex_shipout:D\@undefined
+    \PackageError{preview}{Cannot find \protect\shipout\space primitive}%
+    {preview needs to replace the \protect\shipout\space primitive with
+      its own routine to do its work.  Due to packages or formats
+      interfering, it cannot be identified.  Please report this.}
+  \else
+    \global\let\pr@shipout=\tex_shipout:D
+    \global\let\tex_shipout:D=\pr@@shipout
+  \fi
+  \endgroup
+\else
+  \let\pr@shipout=\shipout
+  \let\shipout=\pr@@shipout
+\fi
 %    \end{macrocode}
 % \end{macro}
 % \subsection{Parsing commands}
@@ -1649,7 +1669,7 @@ Please complain to your document class author}%
 %<tightpage>       7{currentfile token not{stop}if 65781.76 div })) pop}
 %    \end{macrocode}
 % The ``userdict'' at the start of the last special is also there to
-% avoid an unknown special in dvipng<=1.6. This is the end of the
+% avoid an unknown special in dvipng$<=1.6$. This is the end of the
 % backwards-compatibility code.
 %    \begin{macrocode}
 %<tightpage>  \special{!userdict begin/bop-hook{%

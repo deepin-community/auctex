@@ -1,6 +1,6 @@
-;;; error-parsing.el --- tests for error parsing
+;;; error-parsing.el --- tests for error parsing  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2017 Free Software Foundation, Inc.
+;; Copyright (C) 2017-2021  Free Software Foundation, Inc.
 
 ;; This file is part of AUCTeX.
 
@@ -22,7 +22,6 @@
 ;;; Code:
 
 (require 'ert)
-(require 'tex-buf)
 (setq japanese-TeX-error-messages t)
 (require 'tex-jp)
 
@@ -31,34 +30,34 @@
 It should pick up error messages from the log file even if
 tex-jp.el modified `TeX-error-description-list'."
   (should (let* ((dummyfile (make-temp-file "japanese-TeX-ert"))
-		 (logfile (concat dummyfile ".log")))
-	    (find-file logfile)
-	    (insert "\
+                 (logfile (concat dummyfile ".log")))
+            (find-file logfile)
+            (insert "\
 ./errorsamp.tex:3: EROOR NEVER COVERED BY TeX-error-description-list.
 l.3 }
      
 FOO BAR
 HOGE FUGA
 ")
-	    (save-buffer 0)
-	    (find-file dummyfile)
-	    ;; Actually, the contents of dummyfile is irrelavent to
-	    ;; this test.  It is only used to make the log file name
-	    ;; which is analysed in `TeX-help-error' to be
-	    ;; predictable.
-	    (let ((TeX-command-buffer (current-buffer)))
-	      (TeX-help-error
-	       "EROOR NEVER COVERED BY TeX-error-description-list."
-	       "" (current-buffer) 'error))
-	    (delete-other-windows)
-	    (kill-buffer (get-file-buffer logfile))
-	    (delete-file logfile)
-	    (kill-buffer (get-file-buffer dummyfile))
-	    (delete-file dummyfile)
-	    (set-buffer "*TeX Help*")
-	    (goto-char (point-min))
-	    (prog1
-		(search-forward "From the .log file...")
-	      (kill-buffer)))))
+            (save-buffer 0)
+            (find-file dummyfile)
+            ;; Actually, the contents of dummyfile is irrelavent to
+            ;; this test.  It is only used to make the log file name
+            ;; which is analysed in `TeX-help-error' to be
+            ;; predictable.
+            (let ((TeX-command-buffer (current-buffer)))
+              (TeX-help-error
+               "EROOR NEVER COVERED BY TeX-error-description-list."
+               "" (current-buffer) 'error))
+            (delete-other-windows)
+            (kill-buffer (get-file-buffer logfile))
+            (delete-file logfile)
+            (kill-buffer (get-file-buffer dummyfile))
+            (delete-file dummyfile)
+            (set-buffer "*TeX Help*")
+            (goto-char (point-min))
+            (prog1
+                (search-forward "From the .log file...")
+              (kill-buffer)))))
 
 ;;; error-parsing.el ends here

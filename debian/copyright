@@ -7,11 +7,11 @@ Upstream-Contact: General discussion about AUCTeX <auctex@gnu.org>
 Source: http://www.gnu.org/software/auctex/
 
 Files: *
-Copyright: 1985-2017, Free Software Foundation, Inc
+Copyright: 1985-2023, Free Software Foundation, Inc
 License: GPL-3+
 
 Files: debian/*
-Copyright: 1997-2017, Davide G. M. Salvetti
+Copyright: 1997-2023, Davide G. M. Salvetti
 License: GPL-3+
 
 Files: doc/auctex.texi
@@ -30,15 +30,15 @@ Files: doc/auctex.texi
        doc/quickstart.texi
        doc/todo.texi
        doc/wininstall.texi
-Copyright: 1992-2017, Free Software Foundation, Inc
+Copyright: 1992-2023, Free Software Foundation, Inc
 License: GFDL-NIV-1.3
 
 Files: doc/intro.texi
-Copyright: 2008, Free Software Foundation, Inc
+Copyright: 2008, 2017, 2018, Free Software Foundation, Inc
 License: permissive
 
 Files: doc/tex-ref.tex
-Copyright: 1987-2017, Free Software Foundation, Inc
+Copyright: 1987-2023, Free Software Foundation, Inc
 License: preserve-notice
 
 Files: install-sh
@@ -65,7 +65,7 @@ Files: style/amsbsy.el style/amstext.el
 Copyright: Carsten Dominik
 License: tobeclarified
 
-Files: style/amsart.el style/amsbook.el style/article.el style/book.el
+Files: style/amsbook.el style/article.el style/book.el
   style/czech.el style/danish.el style/english.el style/german.el
   style/graphics.el style/ngerman.el style/slovak.el style/swedish.el
 Copyright: tobeclarified

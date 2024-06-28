@@ -1,6 +1,6 @@
-;; -*- emacs-lisp -*-
+;; -*-  mode: emacs-lisp; lexical-binding: t;  -*-
 
-;; Copyright (C) 2017 Free Software Foundation, Inc.
+;; Copyright (C) 2017, 2021 Free Software Foundation, Inc.
 
 ;; This file is part of AUCTeX.
 
@@ -21,7 +21,7 @@
 
 ;;; Commentary:
 
-;; This file provides some functions and .
+;; This file provides some goodies for regression tests.
 
 ;; It has an .emacs-lisp extension because it makes the Makefile easier!
 

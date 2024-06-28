@@ -2,7 +2,7 @@ dnl Autoconf script for AUCTeX
 
 dnl Maintainer: auctex-devel@gnu.org
 
-dnl Copyright (C) 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
+dnl Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
 dnl This file is part of AUCTeX.
 
@@ -21,7 +21,7 @@ dnl along with AUCTeX; see the file COPYING.  If not, write to the Free
 dnl Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 dnl MA 02110-1301, USA.
 
-AC_INIT(auctex,12.2,bug-auctex@gnu.org)
+AC_INIT([auctex],[13.2],[bug-auctex@gnu.org])
 
 AC_CHECK_PROGS_REQUIRED(MAKECMD, make, [make not found, aborting!])
 AC_PROG_MAKE_SET
@@ -37,7 +37,7 @@ AC_SUBST(PREVIEWVERSION)
 
 EMACS_PROG_EMACS
 
-EMACS_CHECK_VERSION(24,1)
+EMACS_CHECK_VERSION(25,1)
 
 # The Debian package uses `--disable-build-dir-test'; normal users should
 # never need to modify the default behavior.
@@ -54,8 +54,6 @@ AC_ARG_ENABLE(preview,
   [preview_enabled="$enableval"],
   [preview_enabled="yes"])
 AC_SUBST(preview_enabled)
-
-PLAT_LISP=prv-emacs.el
 
 EMACS_PATH_LISPDIR
 AC_MSG_CHECKING(what file to use for auctex startup)
@@ -92,7 +90,6 @@ texsitedir="${lispdir}"
 
 AC_SUBST(auctexstartfile)
 AC_SUBST(previewstartfile)
-AC_SUBST(PLAT_LISP)
 
 AC_MSG_CHECKING([where the package lisp files go])
 AC_ARG_WITH(packagelispdir,
@@ -271,7 +268,8 @@ AC_SHELL_QUOTIFY(TEXI2HTML)
 AC_SHELL_QUOTIFY(TEXI2DVI)
 AC_SHELL_QUOTIFY(TEXI2PDF)
 
-AC_OUTPUT(Makefile tex-site.el.out:tex-site.el.in doc/Makefile auctex.el preview.el latex/Makefile)
+AC_CONFIG_FILES([Makefile tex-site.el.out:tex-site.el.in doc/Makefile auctex.el preview.el latex/Makefile])
+AC_OUTPUT
 
 
 cat >&2 <<EOF

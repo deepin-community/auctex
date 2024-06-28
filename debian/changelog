@@ -1,14 +1,48 @@
+auctex (13.2-1) unstable; urgency=medium
+
+  * [3c41e87] New upstream release 13.2
+    Thanks to Amr Ibrahim, AlMa, Janusz S. Bień, Xiyue Deng, Marcelo Laia, Hilmar Preusse
+    (Closes: #1028238, #1040484, #1042874, #1043257, #1053161, #1056160)
+  * [4db638b] debian/patches: Remove upstream merged, rebase.
+    Thanks to Xiyue Deng
+  * [1bb5677] debian/patches: Add Use UTF-8, renumber.
+    Thanks to lintian
+  * [daf33b7] debian/{patches,rules}: Set timestamps to reproducible build.
+    Thanks to Vagrant Cascadian (Closes: #990300)
+  * [0fe85cf] debian/auctex.NEWS: Update for upstream releases from 11.92 to 12.2
+  * [4599742] debian/auctex.NEWS: Update for upstream releases from 12.3 to 13.2
+  * [a5fb566] debian/control (Build-Depends-Indep): Update debhelper compat level
+  * [a0a3448] debian/control (Description): Remove no more needed XEmacs reference
+  * [49e2340] debian/control: Remove constraints unnecessary since buster.
+    Thanks to The Debian Janitor
+  * [20df982] debian/control (Standards-Version): Upgrade to 4.6.2.
+  * [82ac517] debian/control (Build-Depends-Indep): Add texlive-latex-recommended
+  * [d00ad14] debian/control (Homepage): Use secure URI
+  * [becd0da] debian/auctex.emacsen-install: Be verbose while byte compiling
+  * [096b158] debian/auctex.{postinst,postrm,preinst}: Remove ancient cleanup code
+  * [e87c8e7] debian/update-auctex-elisp: Disable font-lock while parsing macros
+  * [5b8a070] debian/auctex.lintian-overrides: Transition to "pointed hints"
+  * [7b08a2c] debian/auctex.lintian-overrides: Add upstream changelog override
+  * [f70fea5] Refactor dh_installdocs related stuff
+  * [598b51f] debian/po/ro.po: Romanian translation.
+    Thanks to Remus-Gabriel Chelu (Closes: #1031145)
+  * [1b37d3a] debian/{COPYRIGHT,copyright}: Update
+  * [8b4ebe5] debian/changelog: Fix spelling
+
+ -- Davide G. M. Salvetti <salve@debian.org>  Mon, 20 Nov 2023 23:59:01 +0100
+
 auctex (12.2-1) unstable; urgency=medium
 
   * [0c6b2de] New upstream release 12.2
-    Thanks to Benjamin Redelings, Itaï BEN YAACOV, Sanjoy Mahajan (Closes: #63513, #702871, #769977, #896844, #912438)
+    Thanks to Benjamin Redelings, Itaï BEN YAACOV, Sanjoy Mahajan
+    (Closes: #63513, #702871, #769977, #896844, #912438)
   * [79f0a28] Drop alternate recommends on dummy package evince-gtk.
     Thanks to Jeremy Bicha (Closes: #884360)
   * [7f3946b] Refresh upstream patches
   * [a25f788] debian/control (Build-Depends-Indep): Add texlive-extra-utils.
     Thanks to Lucas Nussbaum, Itaï BEN YAACOV (Closes: #951973)
   * [ebabf80] debian/auctex.lintian-ovverrides: Update according to 4.2.0 policy
-  * [c5718d9] debian/po/de.po: Reencode in UTF-8
+  * [c5718d9] debian/po/de.po: Re-encode in UTF-8
   * [cc9cf07] debian/compat: Update dh compatibility level to 12
   * [8541bc8] debian/control (Rules-Requires-Root): Declare no root need
   * [17f62ae] debian/control (Standards-Version): Upgrade to 4.5.0

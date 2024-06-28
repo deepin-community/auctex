@@ -3,26 +3,24 @@ Priority: optional
 Section: tex
 Maintainer: Davide G. M. Salvetti <salve@debian.org>
 Uploaders: OHURA Makoto <ohura@debian.org>
-Standards-Version: 4.5.0
-Build-Depends-Indep: autoconf, debhelper (>= 9), emacs, eperl, ghostscript, po-debconf, tex-common (>= 4.01), texlive-latex-base, texlive-extra-utils, texinfo (>= 5)
+Standards-Version: 4.6.2
+Build-Depends-Indep: autoconf, debhelper (>= 12), emacs, eperl, ghostscript, po-debconf, tex-common, texlive-latex-base, texlive-latex-recommended, texlive-extra-utils, texinfo
 Rules-Requires-Root: no
 Homepage: https://www.gnu.org/software/auctex/
 Vcs-Browser: https://salsa.debian.org/salve/auctex
-Vcs-Git: https://salsa.debian.org//salve/auctex.git
+Vcs-Git: https://salsa.debian.org/salve/auctex.git
 
 Package: auctex
 Architecture: all
-Depends: emacs, emacsen-common (>= 3.0.0), preview-latex-style, procps, ${misc:Depends}
+Depends: emacs, emacsen-common, preview-latex-style, procps, ${misc:Depends}
 Recommends: ghostscript, texlive-latex-recommended, xpdf | evince | okular
 Suggests: catdvi, dvipng, lacheck
-Breaks: emacspeak (<= 17.0-1)
 Conflicts: preview-latex
 Replaces: preview-latex
 Provides: preview-latex
 Description: integrated document editing environment for TeX etc.
  AUCTeX is a comprehensive customizable integrated environment for writing
- input files for TeX/LaTeX/ConTeXt/Texinfo using GNU Emacs.  Currently
- XEmacs ships with its own AUCTeX version.
+ input files for TeX/LaTeX/ConTeXt/Texinfo using GNU Emacs.
  .
  It supports processing source files by running TeX and related tools
  (such as output filters, post processors for generating indices and
@@ -45,7 +43,7 @@ Package: preview-latex-style
 Architecture: all
 Depends: ${misc:Depends}
 Breaks: preview-latex (<=0.7.3-2)
-Homepage: http://www.gnu.org/software/auctex/preview-latex.html
+Homepage: https://www.gnu.org/software/auctex/preview-latex.html
 Description: extraction of elements from LaTeX documents as graphics
  The purpose of preview is the extraction of selected elements from a
  LaTeX source, like formulas or graphics, into separate pages of a DVI
