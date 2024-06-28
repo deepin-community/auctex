@@ -18,7 +18,7 @@ EPERL_SRC := $(wildcard debian/*.eperl)
 EPERL_OBJ := $(EPERL_SRC:%.eperl=%)
 
 debian/clean: $(EPERL_OBJ)
-	echo $(filter-out debian/copyright debian/rules \
+	echo $(filter-out debian/rules \
 		debian/auctex.templates, $(EPERL_OBJ)) \
 		debian/auctex.templates.dcobj \
 		debian/clean > debian/clean
@@ -45,6 +45,10 @@ override_dh_auto_build: debian/clean
 	$(MAKE) ELCC=$(ELCC)
 <: #    auto-loads.el needs to be byte-compiled for real :>//
 	rm --force auto-loads.el
+<: # Set the date on files that are debian/patched to avoid
+   # inconsistent embedded timestamps:
+   # https://tests.reproducible-builds.org/debian/issues/timestamps_in_emacs_autoloads_issue.html :>//
+	touch --reference debian/changelog tex.el tex-site.el
 	$(MAKE) auto-loads.el
 <: #    tex-site.el depends on auto-loads.el :>//
 	$(MAKE) tex-site.el
@@ -75,7 +79,6 @@ override_dh_compress:
 .PHONY: override_dh_installdocs
 override_dh_installdocs:
 	install -m 755 -d debian/tmp/usr/doc/auctex/src
-	install -m 644 doc/tex-ref.pdf debian/tmp/usr/doc/auctex
 	install -m 644 doc/*.tex{,i} debian/tmp/usr/doc/auctex/src
 	install -m 644 etc/auctex-logo.tex debian/tmp/usr/doc/auctex/src
 	install -m 755 -d \

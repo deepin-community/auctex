@@ -105,10 +105,15 @@ for FLAVOR in ${_FLAVORS}; do
     echo -n "${PROGNAME}:" \
 	"Scanning macros for Emacs flavor ${FLAVOR}" \
 	"(log to ${LOGFILE})..."
-    [ -z "${NO_ACT}" -o "${NO_ACT}" != 'true' ] && \
+    if [ -z "${NO_ACT}" -o "${NO_ACT}" != 'true' ]; then
 	exec {stdout}>&1 {stderr}>&2 &>${LOGFILE}
-    EXIT_STATUS=0
+	INITFILE=$(mktemp ./XXXXXXXX-el)
+	cat <<EOF >${INITFILE}
+(defun font-lock-fontify-syntactic-keywords-region (start end))
+EOF
+    fi
     ${NO_ACT:+'echo'} ${FLAVOR} --batch --no-site-file --no-init-file \
+	--load=${INITFILE} \
 	--load=/usr/share/emacs/site-lisp/tex-site.el \
 	--funcall=TeX-auto-generate-global \
 	|| EXIT_STATUS=$?

@@ -1,6 +1,6 @@
-;;; tikz.el --- AUCTeX style for `tikz.sty'
+;;; tikz.el --- AUCTeX style for `tikz.sty'  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2016 Free Software Foundation, Inc.
+;; Copyright (C) 2016-2022  Free Software Foundation, Inc.
 
 ;; Author: Matthew Leach <matthew@mattleach.net>
 ;; Maintainer: auctex-devel@gnu.org
@@ -30,11 +30,53 @@
 
 ;;; Code:
 
+(require 'tex)
+(require 'latex)
+
+;; Silence compiler
+(declare-function ConTeXt-add-environments "context"
+                  (&rest environments))
+
+(defconst TeX-TikZ-point-function-map
+  '(("Rect Point" TeX-TikZ-arg-rect-point)
+    ("Polar Point" TeX-TikZ-arg-polar-point)
+    ("Named Point" TeX-TikZ-arg-named-point))
+  "An alist of point specification types and their functions.")
+
+(defconst TeX-TikZ-relative-point-function-map
+  (apply #'append (mapcar
+                   (lambda (point-map)
+                     (let ((key (car point-map))
+                           (value (cadr point-map)))
+                       `((,(concat "+" key) ,value "+")
+                         (,(concat "++" key) ,value "++"))))
+                   TeX-TikZ-point-function-map))
+  "`TeX-TikZ-point-function-map' with \"+\" and \"++\" as a prefix.")
+
+(defconst TeX-TikZ-path-connector-function-map
+  '(("--" identity)
+    ("|-" identity)
+    ( "-|" identity)
+    ("sin" identity)
+    ("cos" identity))
+  "An alist of path connectors.")
+
+(defconst TeX-TikZ-draw-arg-function-map
+  `(,@TeX-TikZ-point-function-map
+    ,@TeX-TikZ-relative-point-function-map
+    ,@TeX-TikZ-path-connector-function-map
+    ("Node" TeX-TikZ-arg-node)
+    ("Circle" TeX-TikZ-arg-circle)
+    ("Arc" TeX-TikZ-arg-arc)
+    ("Parabola" TeX-TikZ-arg-parabola)
+    ("Grid" TeX-TikZ-arg-grid))
+  "An alist of argument names and functions for TikZ's \\draw.")
+
 (defun TeX-TikZ-get-opt-arg-string (arg &optional open close)
   "Return a string for optional arguments.
 If ARG is nil or \"\", return \"\".  Otherwise return \"OPEN ARG
-CLOSE\". If OPEN or CLOSE are nil, set them to `LaTeX-optop' and
-`LaTeX-optcl' respectively."
+CLOSE\".  If OPEN and CLOSE are nil, set them to `LaTeX-optop'
+and `LaTeX-optcl' respectively."
   (unless (or open close)
     (setq open LaTeX-optop)
     (setq close LaTeX-optcl))
@@ -60,7 +102,7 @@ Ask the user for r and theta values, and return the string
 
 (defun TeX-TikZ-arg-options (optional)
   "Prompt the user for options to a TikZ macro.
-If OPTIONAL is non-nil, always return `LaTeX-optop' and
+If OPTIONAL is nil, always return `LaTeX-optop' and
 `LaTeX-optcl', even if the user doesn't provide any input."
   (let ((options (TeX-read-string (TeX-argument-prompt optional nil "Options" ))))
     (if optional
@@ -69,7 +111,7 @@ If OPTIONAL is non-nil, always return `LaTeX-optop' and
 
 (defun TeX-TikZ-arg-name (optional)
   "Prompt the user for a TikZ name.
-If OPTIONAL is non-nil, always return \"()\", even if the user
+If OPTIONAL is nil, always return \"()\", even if the user
 doesn't provide any input."
   (let ((name (TeX-read-string (TeX-argument-prompt optional nil "Name" ))))
     (if optional
@@ -78,8 +120,8 @@ doesn't provide any input."
 
 (defun TeX-TikZ-arg-label (optional)
   "Prompt the user for TikZ label.
-If OPTIONAL is non-nil always return `TeX-grop' and `TeX-grcl',
-even if the user doesn't provide any input."
+If OPTIONAL is nil always return `TeX-grop' and `TeX-grcl', even
+if the user doesn't provide any input."
   (let ((label (TeX-read-string (TeX-argument-prompt optional nil "Label" ))))
     (if optional
         (TeX-TikZ-get-opt-arg-string label TeX-grop TeX-grcl)
@@ -116,14 +158,14 @@ optional input."
          (selected-mapping (assoc selected-argument-type
                                   fn-alist-with-optional-elm)))
 
-    (eval
-     ;; Build the form we wish to evaluate.  This will be the function
-     ;; to be called (the second element in the assoc element),
-     ;; followed by the type name (the first element), followed by any
-     ;; other elements in the list as extra arguments.
-     `(,(cadr selected-mapping)
-       ,(car selected-mapping)
-       ,@(cddr selected-mapping)))))
+    ;; Build the funcall we wish to evaluate.  This will be the function
+    ;; to be called (the second element in the assoc element),
+    ;; followed by the type name (the first element), followed by any
+    ;; other elements in the list as extra arguments.
+    (apply
+     (cadr selected-mapping)
+     (car selected-mapping)
+     (cddr selected-mapping))))
 
 
 (defun TeX-TikZ-macro-arg (function-alist)
@@ -150,17 +192,15 @@ is finished."
     ;; Finish the macro.
     (insert ";")))
 
-(defcustom TeX-TikZ-point-name-regexp
-  "(\\([A-Za-z0-9]+\\))"
-  "A regexp that matches TikZ names."
-  :type 'regexp
-  :group 'auctex-tikz)
-
 (defun TeX-TikZ-find-named-points ()
   "Find TiKZ named points in current enviroment.
 Begin by finding the span of the current TikZ enviroment and then
 searching within that span to find all named-points and return
-them as a list of strings, dropping the '()'."
+them as a list of strings, dropping the \\='()\\='."
+  ;; FIXME: This function depends on `LaTeX-find-matching-begin' and
+  ;; `LaTeX-find-matching-end', so it doesn't work for ConTeXt and
+  ;; plain TeX.  In addition, it isn't compatible with the TikZ code
+  ;; following \tikz.
   (let* ((env-end (save-excursion
                     (LaTeX-find-matching-end)
                      (point)))
@@ -193,7 +233,7 @@ them as a list of strings, dropping the '()'."
 (defun TeX-TikZ-arg-bend (optional)
   "Prompt the user for a bend argument.
 If OPTIONAL is non-nil and the user doesn't provide a point,
-  return \"\"."
+return \"\"."
   (let ((point
          (TeX-TikZ-single-macro-arg TeX-TikZ-point-function-map
                                     (TeX-argument-prompt optional nil "Bend point")
@@ -213,42 +253,6 @@ If OPTIONAL is non-nil and the user doesn't provide a point,
   (let ((options (TeX-TikZ-arg-options t)))
     (concat "grid" options)))
 
-(defconst TeX-TikZ-point-function-map
-  '(("Rect Point" TeX-TikZ-arg-rect-point)
-    ("Polar Point" TeX-TikZ-arg-polar-point)
-    ("Named Point" TeX-TikZ-arg-named-point))
-  "An alist of point specification types and their functions.")
-
-(defconst TeX-TikZ-relative-point-function-map
-  (apply 'append (mapcar
-                  (lambda (point-map)
-                    (let ((key (car point-map))
-                          (value (cadr point-map)))
-                      `((,(concat "+" key) ,value "+")
-                        (,(concat "++" key) ,value "++"))))
-                  TeX-TikZ-point-function-map))
-  "`TeX-TikZ-point-function-map' with \"+\" and \"++\" as a
-prefix.")
-
-(defconst TeX-TikZ-path-connector-function-map
-  '(("--" identity)
-    ("|-" identity)
-    ( "-|" identity)
-    ("sin" identity)
-    ("cos" identity))
-  "An alist of path connectors.")
-
-(defconst TeX-TikZ-draw-arg-function-map
-  `(,@TeX-TikZ-point-function-map
-    ,@TeX-TikZ-relative-point-function-map
-    ,@TeX-TikZ-path-connector-function-map
-    ("Node" TeX-TikZ-arg-node)
-    ("Circle" TeX-TikZ-arg-circle)
-    ("Arc" TeX-TikZ-arg-arc)
-    ("Parabola" TeX-TikZ-arg-parabola)
-    ("Grid" TeX-TikZ-arg-grid))
-  "An alist of argument names and functoins for TikZ's \draw.")
-
 (defun TeX-TikZ-draw-arg (_ignored)
   "Prompt the user for the arguments to a TikZ draw macro."
   (TeX-TikZ-macro-arg TeX-TikZ-draw-arg-function-map))
@@ -264,11 +268,21 @@ prefix.")
 (defun TeX-TikZ-node-arg (_ignored)
   "Prompt the user for the arguments to a TikZ node macro."
   (let ((options (TeX-TikZ-arg-options t))
-        (name (TeX-TikZ-arg-name nil))
+        (name (TeX-TikZ-arg-name t))
         (point (TeX-TikZ-single-macro-arg TeX-TikZ-point-function-map
                                           "Node point type: "))
         (label (TeX-TikZ-arg-label nil)))
     (insert options " " name  " at" point label ";")))
+
+;; TODO: Add similar support for plain TeX.
+(defun TeX-TikZ-env-scope (_ignored)
+  "Ask the user for TikZ option and insert it with surrounding \"[]\".
+If the user provides empty input, insert \"[]\" anyway and put the
+point inside it."
+  (let ((option (TeX-TikZ-arg-options nil)))
+    (insert option)
+    (if (string= option "[]")
+        (set-marker TeX-exit-mark (1- (point))))))
 
 (TeX-add-style-hook
  "tikz"
@@ -276,8 +290,51 @@ prefix.")
    (TeX-add-symbols
     '("draw" (TeX-TikZ-draw-arg))
     '("coordinate" (TeX-TikZ-coordinate-arg))
-    '("node" (TeX-TikZ-node-arg)))
+    '("node" (TeX-TikZ-node-arg))
+    '("tikz" ["TikZ option"])
+    '("tikzset" "TikZ option")
+    ;; FIXME:
+    ;; 1. usetikzlibrary isn't much useful without completion support
+    ;;    for available libraries.
+    ;; 2. ConTeXt users may prefer [...] over {...} as the argument.
+    '("usetikzlibrary" t)
+    ;; XXX: Maybe we should create pgffor.el and factor out this entry
+    ;; into it.
+    '("foreach" (TeX-arg-literal " ") (TeX-arg-free "Variable(s)")
+      (TeX-arg-literal " ") ["Foreach option"]
+      (TeX-arg-literal " in ") "Value list (Use \"...\" for range)"
+      (TeX-arg-literal " ") t))))
+
+;; LaTeX/docTeX specific stuff
+(TeX-add-style-hook
+ "tikz"
+ (lambda ()
    (LaTeX-add-environments
-    '("tikzpicture"))))
+    '("tikzpicture" ["TikZ option"])
+    '("scope" LaTeX-env-args TeX-TikZ-env-scope))
+   ;; tikz.sty loads pgfcore.sty, which loads packages graphicx,
+   ;; keyval and xcolor, too.
+   (TeX-run-style-hooks "pgf" "graphicx" "keyval" "xcolor"))
+ :latex)
+
+;; ConTeXt specific stuff
+(TeX-add-style-hook
+ "tikz"
+ (lambda ()
+   (ConTeXt-add-environments
+    '("tikzpicture" ["TikZ option"])
+    '("scope" ConTeXt-env-args TeX-TikZ-env-scope)))
+ :context)
+
+;; plain TeX specific stuff
+(TeX-add-style-hook
+ "tikz"
+ (lambda ()
+   (TeX-add-symbols
+    '("tikzpicture" ["TikZ option"])
+    "endtikzpicture"
+    '("scope" ["TikZ option"])
+    "endscope"))
+ :plain-tex)
 
 ;;; tikz.el ends here

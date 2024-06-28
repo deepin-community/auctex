@@ -1,6 +1,6 @@
-;;; fvextra.el --- AUCTeX style for `fvextra.sty' (v1.4)
+;;; fvextra.el --- AUCTeX style for `fvextra.sty' (v1.4)  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2017, 2019 Free Software Foundation, Inc.
+;; Copyright (C) 2017--2022 Free Software Foundation, Inc.
 
 ;; Author: Arash Esbati <arash@gnu.org>
 ;; Maintainer: auctex-devel@gnu.org
@@ -26,29 +26,24 @@
 
 ;;; Commentary:
 
-;; This file adds support for `fvextra.sty' (v1.4) from 2019/02/04.
+;; This file adds support for `fvextra.sty' (v1.5) from 2022/11/30.
 ;; `fvextra.sty' is part of TeXLive.
 
 ;;; Code:
 
-;; Needed for compiling `cl-pushnew':
-(eval-when-compile
-  (require 'cl-lib))
+(require 'tex)
+(require 'latex)
 
 ;; Silence the compiler:
 (declare-function font-latex-add-keywords
-		  "font-latex"
-		  (keywords class))
-
-(declare-function font-latex-update-font-lock
-		  "font-latex"
-		  (&optional syntactic-kws))
+                  "font-latex"
+                  (keywords class))
+(declare-function font-latex-set-syntactic-keywords
+                  "font-latex")
 
 (declare-function LaTeX-color-definecolor-list "color" ())
 (declare-function LaTeX-xcolor-definecolor-list "xcolor" ())
-
-;; Defined in fancyvrb.el:
-(defvar LaTeX-fancyvrb-key-val-options-local)
+(declare-function LaTeX-fancyvrb-key-val-options "fancyvrb" ())
 
 (defvar LaTeX-fvextra-key-val-options
   '(;; 3 General options
@@ -56,21 +51,21 @@
     ("curlyquotes" ("true" "false"))
     ("extra" ("true" "false"))
     ("fontencoding" (;; Reset to default document font encoding
-		     "none"
-		     ;; 128+ glyph encodings (text)
-		     "OT1" "OT2" "OT3" "OT4" "OT6"
-		     ;; 256 glyph encodings (text)
-		     "T1" "T2A" "T2B" "T2C" "T3" "T4" "T5"
-		     ;; 256 glyph encodings (text extended)
-		     "X2"
-		     ;; Other encodings
-		     "LY1" "LV1" "LGR"))
+                     "none"
+                     ;; 128+ glyph encodings (text)
+                     "OT1" "OT2" "OT3" "OT4" "OT6"
+                     ;; 256 glyph encodings (text)
+                     "T1" "T2A" "T2B" "T2C" "T3" "T4" "T5"
+                     ;; 256 glyph encodings (text extended)
+                     "X2"
+                     ;; Other encodings
+                     "LY1" "LV1" "LGR"))
     ("highlightcolor")
     ("highlightlines")
     ("linenos" ("true" "false"))
     ("mathescape" ("true" "false"))
     ("numberfirstline" ("true" "false"))
-    ;; ("numbers" ("none" "left" "right" "both"))
+    ("numbers" ("none" "left" "right" "both"))
     ("retokenize" ("true" "false"))
     ("space" ("\\textvisiblespace"))
     ("spacecolor" ("none"))
@@ -80,7 +75,7 @@
     ("tabcolor" ("none"))
     ;; 7.1 Line breaking options
     ("breakafter" ("none"))
-    ("breakaftergroup" ("true" "false"))
+    ("breakafterinrun" ("true" "false"))
     ("breakaftersymbolpre")
     ("breakaftersymbolpost")
     ("breakanywhere" ("true" "false"))
@@ -88,12 +83,13 @@
     ("breakanywheresymbolpost")
     ("breakautoindent" ("true" "false"))
     ("breakbefore")
-    ("breakbeforegroup" ("true" "false"))
+    ("breakbeforeinrun" ("true" "false"))
     ("breakbeforesymbolpre")
     ("breakbeforesymbolpost")
     ("breakindent")
     ("breakindentnchars")
     ("breaklines" ("true" "false"))
+    ("breaknonspaceingroup" ("true" "false"))
     ("breaksymbol")
     ("breaksymbolleft")
     ("breaksymbolright")
@@ -111,38 +107,6 @@
     ("breaksymbolseprightnchars"))
   "Key=value options for fvextra macros and environments.")
 
-(defun LaTeX-fvextra-update-key-val ()
-  "Update `LaTeX-fancyvrb-key-val-options-local' with key=vals from \"fvextra.sty\"."
-  ;; Delete the key "numbers" from `LaTeX-fancyvrb-key-val-options-local':
-  (setq LaTeX-fancyvrb-key-val-options-local
-	(assq-delete-all (car (assoc "numbers" LaTeX-fancyvrb-key-val-options-local))
-			 LaTeX-fancyvrb-key-val-options-local))
-  ;; Add the key with "both" value:
-  (add-to-list 'LaTeX-fancyvrb-key-val-options-local
-	       '("numbers" ("none" "left" "right" "both")))
-  ;; Add color values to resp. keys:
-  (when (or (member "xcolor" (TeX-style-list))
-	    (member "color" (TeX-style-list)))
-    (let* ((colorcmd (if (member "xcolor" (TeX-style-list))
-			 #'LaTeX-xcolor-definecolor-list
-		       #'LaTeX-color-definecolor-list))
-	   (keys '("highlightcolor"
-		   "rulecolor"
-		   "fillcolor"
-		   "tabcolor"
-		   "spacecolor"))
-	   (tmp (copy-alist LaTeX-fancyvrb-key-val-options-local)))
-      (dolist (x keys)
-	(setq tmp (assq-delete-all (car (assoc x tmp)) tmp))
-	(if (string= x "highlightcolor")
-	    (cl-pushnew (list x (mapcar #'car (funcall colorcmd))) tmp :test #'equal)
-	  (cl-pushnew (list x (append '("none") (mapcar #'car (funcall colorcmd)))) tmp :test #'equal)))
-      (setq LaTeX-fancyvrb-key-val-options-local
-	    (copy-alist tmp)))))
-
-(add-hook 'TeX-auto-cleanup-hook #'LaTeX-fvextra-update-key-val t)
-(add-hook 'TeX-update-style-hook #'TeX-auto-parse t)
-
 (TeX-add-style-hook
  "fvextra"
  (lambda ()
@@ -150,24 +114,20 @@
    ;; Run the style hook for "fancyvrb"
    (TeX-run-style-hooks "fancyvrb")
 
-   ;; Append `LaTeX-fvextra-key-val' to `LaTeX-fancyvrb-key-val-options-local':
-   (setq LaTeX-fancyvrb-key-val-options-local
-	 (append LaTeX-fvextra-key-val-options
-		 LaTeX-fancyvrb-key-val-options-local))
-
    (TeX-add-symbols
     ;; 4.1 Inline formatting with \fvinlineset
-    '("fvinlineset" (TeX-arg-key-val LaTeX-fancyvrb-key-val-options-local))
+    '("fvinlineset" (TeX-arg-key-val (LaTeX-fancyvrb-key-val-options)))
 
     ;; 4.2 Line and text formatting
+    "FancyVerbFormatInline"
     "FancyVerbFormatText"
 
     ;; 6 New commands and environments
     ;; 6.1 \EscVerb
     '("EscVerb"
-      [ TeX-arg-key-val LaTeX-fancyvrb-key-val-options-local ] "Text")
+      [TeX-arg-key-val (LaTeX-fancyvrb-key-val-options)] "Text")
     '("EscVerb*"
-      [ TeX-arg-key-val LaTeX-fancyvrb-key-val-options-local ] "Text")
+      [TeX-arg-key-val (LaTeX-fancyvrb-key-val-options)] "Text")
 
     ;; 7.3.2 Breaks within macro arguments
     "FancyVerbBreakStart"
@@ -178,22 +138,32 @@
     "FancyVerbBreakBeforeBreak"
     "FancyVerbBreakAfterBreak")
 
-   ;; Add \EscVerb*? to `LaTeX-verbatim-macros-with-braces-local':
-   (add-to-list 'LaTeX-verbatim-macros-with-braces-local
-		"EscVerb" t)
-   (add-to-list 'LaTeX-verbatim-macros-with-braces-local
-		"EscVerb*" t)
+   ;; 6.2 VerbEnv environment
+   (LaTeX-add-environments
+    '("VerbEnv" LaTeX-env-args
+      [TeX-arg-key-val (LaTeX-fancyvrb-key-val-options)]))
+
+   ;; Filling
+   (add-to-list 'LaTeX-verbatim-environments-local "VerbEnv")
+   (add-to-list (make-local-variable 'LaTeX-indent-environment-list)
+                '("VerbEnv" current-indentation) t)
+
+   ;; Add \Verb*? and \EscVerb*? to
+   ;; `LaTeX-verbatim-macros-with-braces-local':
+   (let ((macs '("Verb" "Verb*"
+                 "EscVerb" "EscVerb*")))
+     (dolist (mac macs)
+       (add-to-list 'LaTeX-verbatim-macros-with-braces-local mac t)))
 
    ;; Fontification
    (when (and (fboundp 'font-latex-add-keywords)
-	      (fboundp 'font-latex-update-font-lock)
-	      (eq TeX-install-font-lock 'font-latex-setup))
+              (eq TeX-install-font-lock 'font-latex-setup))
      (font-latex-add-keywords '(("fvinlineset" "{"))
-			      'function)
+                              'function)
      (font-latex-add-keywords '(("EscVerb"     "*["))
-			      'textual)
-     (font-latex-update-font-lock t)) )
- LaTeX-dialect)
+                              'textual)
+     (font-latex-set-syntactic-keywords)))
+ TeX-dialect)
 
 (defvar LaTeX-fvextra-package-options nil
   "Package options for the fvextra package.")

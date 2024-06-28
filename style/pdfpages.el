@@ -1,6 +1,6 @@
-;;; pdfpages.el --- AUCTeX style for `pdfpages.sty' (v0.4v)
+;;; pdfpages.el --- AUCTeX style for `pdfpages.sty' (v0.4v)  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2015, 2018 Free Software Foundation, Inc.
+;; Copyright (C) 2015--2023 Free Software Foundation, Inc.
 
 ;; Author: Arash Esbati <arash@gnu.org>
 ;; Maintainer: auctex-devel@gnu.org
@@ -34,10 +34,12 @@
 
 ;;; Code:
 
+(require 'tex)
+
 ;; Silence the compiler:
 (declare-function font-latex-add-keywords
-		  "font-latex"
-		  (keywords class))
+                  "font-latex"
+                  (keywords class))
 
 (defvar LaTeX-pdfpages-key-val-options
   '(;; Main options:
@@ -100,17 +102,18 @@
 
    (TeX-add-symbols
     ;; \includepdf[<options>]{<filename>}
-    '("includepdf"
+    `("includepdf"
       [TeX-arg-key-val LaTeX-pdfpages-key-val-options]
-      (TeX-arg-eval
-       (lambda ()
+      ,(lambda (optional)
          (let ((pdffile (file-relative-name
-			 (read-file-name
-			  "File to include: " nil nil nil nil
-			  (lambda (pdfs)
-			    (string-match "\\.pdf$" pdfs)))
-			 (TeX-master-directory))))
-	   (format "%s" pdffile)))))
+                         (read-file-name
+                          (TeX-argument-prompt optional nil "File to include")
+                          nil nil nil nil
+                          (lambda (pdfs)
+                            (or (file-directory-p pdfs)
+                                (string-match "\\.pdf\\'" pdfs))))
+                         (TeX-master-directory))))
+           (TeX-argument-insert pdffile optional))))
 
     ;; \includepdfmerge[<options>]{<file-page-list>}
     ;; The mandatory argument is complex, we just insert a pair of
@@ -126,13 +129,13 @@
 
    ;; Fontification
    (when (and (featurep 'font-latex)
-	      (eq TeX-install-font-lock 'font-latex-setup))
+              (eq TeX-install-font-lock 'font-latex-setup))
      (font-latex-add-keywords '(("includepdfset"    "{"))
-			      'function)
+                              'function)
      (font-latex-add-keywords '(("includepdf"       "[{")
-				("includepdfmerge"  "[{"))
-			      'reference)))
- LaTeX-dialect)
+                                ("includepdfmerge"  "[{"))
+                              'reference)))
+ TeX-dialect)
 
 (defvar LaTeX-pdfpages-package-options
   '("final" "draft" "enable-survey")

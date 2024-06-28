@@ -1,6 +1,6 @@
-;;; newfloat.el --- AUCTeX style for `newfloat.sty' (v1.1-109)
+;;; newfloat.el --- AUCTeX style for `newfloat.sty' (v1.1-109)  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2015, 2018 Free Software Foundation, Inc.
+;; Copyright (C) 2015--2023 Free Software Foundation, Inc.
 
 ;; Author: Arash Esbati <arash@gnu.org>
 ;; Maintainer: auctex-devel@gnu.org
@@ -56,11 +56,12 @@
 
 ;; Needed for auto-parsing:
 (require 'tex)
+(require 'latex)
 
 ;; Silence the compiler:
 (declare-function font-latex-add-keywords
-		  "font-latex"
-		  (keywords class))
+                  "font-latex"
+                  (keywords class))
 
 (defvar LaTeX-newfloat-key-val-options
   '(("fileext")
@@ -70,25 +71,28 @@
     ("chapterlistsgaps" ("on" "off")))
   "Key=value options for newfloat macros.")
 
-(defvar LaTeX-newfloat-key-val-options-local nil
-  "Buffer-local Key=value options for newfloat macros.")
-(make-variable-buffer-local 'LaTeX-newfloat-key-val-options-local)
+(defun LaTeX-newfloat-key-val-options ()
+  "Return newfloat key=vals based on variable `LaTeX-largest-level'."
+  (append
+   (if (< (LaTeX-largest-level) 2)
+       '(("within" ("chapter" "section" "none")))
+     '(("within" ("section" "none"))))
+   LaTeX-newfloat-key-val-options))
 
 ;; Setup parsing for \DeclareFloatingEnvironment:
 (TeX-auto-add-type "newfloat-DeclareFloatingEnvironment" "LaTeX")
 
-(defvar LaTeX-newfloat-DeclareFloatingEnvironment-regex
+(defvar LaTeX-newfloat-DeclareFloatingEnvironment-regexp
   `(,(concat "\\\\DeclareFloatingEnvironment"
-	     "[ \t\n\r%]*"
-	     "\\["
-	     "[ \t\n\r%{}a-zA-Z0-9=,-]*"
-	     "\\]"
-	     "[ \t\n\r%]*"
-	     "{\\([^}]+\\)}"
-	     "\\(?:[ %]*{\\([^}]*\\)}\\)?")
+             "[ \t\n\r%]*"
+             "\\(?:"
+             (LaTeX-extract-key-value-label 'none)
+             "\\)?"
+             "[ \t\n\r%]*"
+             "{\\([^}]+\\)}"
+             "\\(?:[ %]*{\\(figure\\|table\\|verbatim\\)}\\)?")
     (1 2) LaTeX-auto-newfloat-DeclareFloatingEnvironment)
-  "Matches the argument of `\\DeclareFloatingEnvironment' from
-`newfloat.sty'.")
+  "Matches the argument of `\\DeclareFloatingEnvironment' from `newfloat.sty'.")
 
 (defun LaTeX-newfloat-auto-prepare ()
   "Clear `LaTeX-auto-newfloat-DeclareFloatingEnvironment' before parsing."
@@ -107,37 +111,37 @@ If `caption.el' is loaded, add the new floating environment to
 \"listofENVs\" and \"listofENVes\"."
   (dolist (flt-type (LaTeX-newfloat-DeclareFloatingEnvironment-list))
     (let ((flt  (car  flt-type))
-	  (type (cadr flt-type)))
+          (type (cadr flt-type)))
       (cond ((string-equal type "figure")
-	     (LaTeX-add-environments `(,flt LaTeX-env-figure))
-	     (add-to-list 'LaTeX-label-alist `(,flt . LaTeX-figure-label) t)
-	     (when (fboundp 'reftex-add-label-environments)
-	       (reftex-add-label-environments
-		`((,flt ?f ,LaTeX-figure-label "~\\ref{%s}" caption nil nil)))))
-	    ((string-equal type "table")
-	     (LaTeX-add-environments `(,flt LaTeX-env-figure))
-	     (add-to-list 'LaTeX-label-alist `(,flt . LaTeX-table-label) t)
-	     (when (fboundp 'reftex-add-label-environments)
-	       (reftex-add-label-environments
-		`((,flt ?t ,LaTeX-table-label "~\\ref{%s}" caption nil nil)))))
-	    ((string-equal type "verbatim")
-	     (LaTeX-add-environments `(,flt ["Float Position"]))
-	     (add-to-list (make-local-variable 'LaTeX-indent-environment-list)
-			  `(,flt current-indentation) t)
-	     (add-to-list 'LaTeX-label-alist `(,flt . LaTeX-listing-label) t)
-	     (when (fboundp 'reftex-add-label-environments)
-	       (reftex-add-label-environments
-		`((,flt ?l "lst:" "~\\ref{%s}" caption nil nil)))))
-	    (t
-	     (LaTeX-add-environments `(,flt ["Float Position"]))))
+             (LaTeX-add-environments `(,flt LaTeX-env-figure))
+             (add-to-list 'LaTeX-label-alist `(,flt . LaTeX-figure-label) t)
+             (when (fboundp 'reftex-add-label-environments)
+               (reftex-add-label-environments
+                `((,flt ?f ,LaTeX-figure-label "~\\ref{%s}" caption nil nil)))))
+            ((string-equal type "table")
+             (LaTeX-add-environments `(,flt LaTeX-env-figure))
+             (add-to-list 'LaTeX-label-alist `(,flt . LaTeX-table-label) t)
+             (when (fboundp 'reftex-add-label-environments)
+               (reftex-add-label-environments
+                `((,flt ?t ,LaTeX-table-label "~\\ref{%s}" caption nil nil)))))
+            ((string-equal type "verbatim")
+             (LaTeX-add-environments `(,flt ["Float Position"]))
+             (add-to-list (make-local-variable 'LaTeX-indent-environment-list)
+                          `(,flt current-indentation) t)
+             (add-to-list 'LaTeX-label-alist `(,flt . LaTeX-listing-label) t)
+             (when (fboundp 'reftex-add-label-environments)
+               (reftex-add-label-environments
+                `((,flt ?l "lst:" "~\\ref{%s}" caption nil nil)))))
+            (t
+             (LaTeX-add-environments `(,flt ["Float Position"]))))
       (when (boundp 'LaTeX-caption-supported-float-types)
-	(add-to-list (make-local-variable 'LaTeX-caption-supported-float-types)
-		     flt))
+        (add-to-list (make-local-variable 'LaTeX-caption-supported-float-types)
+                     flt))
       (if (string-equal "e" (substring flt -1))
-	  (TeX-add-symbols (concat "listof" flt "s"))
-	(TeX-add-symbols
-	 (concat "listof" flt "s")
-	 (concat "listof" flt "es"))))))
+          (TeX-add-symbols (concat "listof" flt "s"))
+        (TeX-add-symbols
+         (concat "listof" flt "s")
+         (concat "listof" flt "es"))))))
 
 (add-hook 'TeX-auto-prepare-hook #'LaTeX-newfloat-auto-prepare t)
 (add-hook 'TeX-auto-cleanup-hook #'LaTeX-newfloat-auto-cleanup t)
@@ -148,66 +152,53 @@ If `caption.el' is loaded, add the new floating environment to
  (lambda ()
 
    ;; Add newfloat to the parser.
-   (TeX-auto-add-regexp LaTeX-newfloat-DeclareFloatingEnvironment-regex)
-
-   ;; Depending on class, add "within" key to the local options list
-   ;; and use it.
-   (setq LaTeX-newfloat-key-val-options-local
-	 (copy-alist LaTeX-newfloat-key-val-options))
-
-   (if (< (LaTeX-largest-level) 2)
-       (add-to-list 'LaTeX-newfloat-key-val-options-local
-		    '("within" ("chapter" "section" "none")))
-     (add-to-list 'LaTeX-newfloat-key-val-options-local
-		  '("within" ("section" "none"))))
+   (TeX-auto-add-regexp LaTeX-newfloat-DeclareFloatingEnvironment-regexp)
 
    ;; Commands:
    (TeX-add-symbols
-    '("DeclareFloatingEnvironment"
-      [TeX-arg-key-val LaTeX-newfloat-key-val-options-local]
-      (TeX-arg-eval
-       (lambda ()
-	 (let ((newfloat (TeX-read-string
-			 (TeX-argument-prompt nil nil "Floating environment"))))
-	   (LaTeX-add-newfloat-DeclareFloatingEnvironments newfloat)
-	   (format "%s" newfloat)))))
+    `("DeclareFloatingEnvironment"
+      [TeX-arg-key-val (LaTeX-newfloat-key-val-options)]
+      ,(lambda (optional)
+         (let ((newfloat (TeX-read-string
+                          (TeX-argument-prompt optional nil "Floating environment"))))
+           (LaTeX-add-newfloat-DeclareFloatingEnvironments newfloat)
+           (TeX-argument-insert newfloat optional))))
 
-    '("SetupFloatingEnvironment"
-      (TeX-arg-eval completing-read
-		    (TeX-argument-prompt nil nil "Floating environment")
-		    (mapcar 'car (LaTeX-newfloat-DeclareFloatingEnvironment-list)))
-      (TeX-arg-key-val LaTeX-newfloat-key-val-options-local))
+    `("SetupFloatingEnvironment"
+      (TeX-arg-completing-read
+       ,(lambda ()
+          (mapcar #'car (LaTeX-newfloat-DeclareFloatingEnvironment-list)))
+       "Floating environment")
+      (TeX-arg-key-val (LaTeX-newfloat-key-val-options)))
 
     '("ForEachFloatingEnvironment" t)
     '("ForEachFloatingEnvironment*" t)
 
-    '("PrepareListOf"
-      (TeX-arg-eval completing-read
-		    (TeX-argument-prompt nil nil "Floating environment")
-		    (mapcar 'car (LaTeX-newfloat-DeclareFloatingEnvironment-list)))
+    `("PrepareListOf"
+      (TeX-arg-completing-read
+       ,(lambda ()
+          (mapcar #'car (LaTeX-newfloat-DeclareFloatingEnvironment-list)))
+       "Floating environment")
       t)
 
-    '("newfloatsetup"
-      (TeX-arg-eval
-       (lambda ()
-	 (let ((keyvals (TeX-read-key-val
-			 nil
-			 (append '(("chapterlistsgap"))
-				 (if (< (LaTeX-largest-level) 2)
-				     '(("within" ("chapter" "section" "none")))
-				   '(("within" ("section" "none"))))))))
-	   (format "%s" keyvals))))))
+    `("newfloatsetup"
+      (TeX-arg-key-val
+       ,(lambda ()
+          (append '(("chapterlistsgap"))
+                  (if (< (LaTeX-largest-level) 2)
+                      '(("within" ("chapter" "section" "none")))
+                    '(("within" ("section" "none")))))))))
 
    ;; Fontification
    (when (and (featurep 'font-latex)
-	      (eq TeX-install-font-lock 'font-latex-setup))
+              (eq TeX-install-font-lock 'font-latex-setup))
      (font-latex-add-keywords '(("DeclareFloatingEnvironment"  "[{")
-				("SetupFloatingEnvironment"    "{{")
-				("ForEachFloatingEnvironment"  "*{")
-				("PrepareListOf"               "{{")
-				("newfloatsetup"               "{"))
-			      'function)))
- LaTeX-dialect)
+                                ("SetupFloatingEnvironment"    "{{")
+                                ("ForEachFloatingEnvironment"  "*{")
+                                ("PrepareListOf"               "{{")
+                                ("newfloatsetup"               "{"))
+                              'function)))
+ TeX-dialect)
 
 (defun LaTeX-newfloat-package-options ()
   "Prompt for package options for the newfloat package."
@@ -216,7 +207,7 @@ If `caption.el' is loaded, add the new floating environment to
    (append
     '(("chapterlistsgap"))
     (if (< (LaTeX-largest-level) 2)
-	'(("within" ("chapter" "section" "none")))
+        '(("within" ("chapter" "section" "none")))
       '(("within" ("section" "none")))))))
 
 ;;; newfloat.el ends here

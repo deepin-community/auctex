@@ -1,6 +1,6 @@
-;;; bidi.el --- AUCTeX style for the (XeLaTeX) bidi package
+;;; bidi.el --- AUCTeX style for the (XeLaTeX) bidi package  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2016--2018 Free Software Foundation, Inc.
+;; Copyright (C) 2016--2021 Free Software Foundation, Inc.
 
 ;; Author: Uwe Brauer <oub@mat.ucm.es>
 ;; Created: 2016-03-06
@@ -29,10 +29,13 @@
 
 ;;; Code:
 
+(require 'tex)
+(require 'latex)
+
 ;; Silence the compiler:
 (declare-function font-latex-add-keywords
-		  "font-latex"
-		  (keywords class))
+                  "font-latex"
+                  (keywords class))
 
 (defvar LaTeX-bidi-package-options
   '("RTLdocument" "rldocument" "extrafootnotefeatures")
@@ -49,6 +52,7 @@
 (TeX-add-style-hook
  "bidi"
  (lambda ()
+
    ;; bidi.sty requires xelatex, so set the engine
    (TeX-check-engine-add-engines 'xetex)
 
@@ -168,25 +172,25 @@
 
    ;; Fontification
    (when (and (featurep 'font-latex)
-	      (eq TeX-install-font-lock 'font-latex-setup))
+              (eq TeX-install-font-lock 'font-latex-setup))
      (font-latex-add-keywords '(("LR"        "{")
-				("LRE"       "{")
-				("RLE"       "{")
-				("RL"        "{")
-				("LTRthanks" "{")
-				("RTLthanks" "{"))
-			      'textual)
+                                ("LRE"       "{")
+                                ("RLE"       "{")
+                                ("RL"        "{")
+                                ("LTRthanks" "{")
+                                ("RTLthanks" "{"))
+                              'textual)
      (font-latex-add-keywords '(("LTRfootnote"     "[{")
-				("RTLfootnote"     "[{")
-				("LTRfootnotetext" "[{")
-				("RTLfootnotetext" "[{")
-				("LTRmarginpar"    "[{")
-				("RTLmarginpar"    "[{"))
-			      'reference)
+                                ("RTLfootnote"     "[{")
+                                ("LTRfootnotetext" "[{")
+                                ("RTLfootnotetext" "[{")
+                                ("LTRmarginpar"    "[{")
+                                ("RTLmarginpar"    "[{"))
+                              'reference)
      (font-latex-add-keywords '(("XeTeX"   "")
-				("XeLaTeX" "")
-				("SepMark" "{"))
-			      'function)))
- LaTeX-dialect)
+                                ("XeLaTeX" "")
+                                ("SepMark" "{"))
+                              'function)))
+ TeX-dialect)
 
 ;;; bidi.el ends here

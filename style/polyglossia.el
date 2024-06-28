@@ -1,6 +1,6 @@
-;;; polyglossia.el --- AUCTeX style for `polyglossia.sty' version 1.42.0.
+;;; polyglossia.el --- AUCTeX style for `polyglossia.sty' version 1.42.0.  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2015, 2018 Free Software Foundation, Inc.
+;; Copyright (C) 2015-2022  Free Software Foundation, Inc.
 
 ;; Maintainer: auctex-devel@gnu.org
 ;; Author: Mosè Giordano <mose@gnu.org>
@@ -36,23 +36,24 @@
 ;;; Code:
 
 (require 'tex) ;Indispensable when compiling the call to `TeX-auto-add-type'.
+(require 'latex)
 
 ;; Silence the compiler:
 (declare-function font-latex-add-keywords
-		  "font-latex"
-		  (keywords class))
+                  "font-latex"
+                  (keywords class))
 
 (TeX-auto-add-type "polyglossia-lang" "LaTeX")
 
 ;; Self Parsing -- see (info "(auctex)Hacking the Parser").
 (defvar LaTeX-polyglossia-lang-regexp
   (concat "\\\\set\\(defaultlanguage\\|mainlanguage\\|otherlanguages?\\)"
-	  "[ \t\n\r]*\\(?:\\[\\(.*\\)\\]\\)?[ \t\n\r]*{\\([A-Za-z, ]+\\)}")
+          "[ \t\n\r]*\\(?:\\[\\(.*\\)\\]\\)?[ \t\n\r]*{\\([A-Za-z, ]+\\)}")
   "Matches languages set with polyglossia macros.")
 
 (defvar LaTeX-polyglossia-setkeys-regexp
   (concat "\\\\setkeys"
-	  "[ \t\n\r]*{\\([A-Za-z]+\\)}[ \t\n\r]*{\\([^}]*\\)}")
+          "[ \t\n\r]*{\\([A-Za-z]+\\)}[ \t\n\r]*{\\([^}]*\\)}")
   "Matches polyglossia languages options set using \"\setkeys\".")
 
 (defvar LaTeX-auto-polyglossia-lang nil
@@ -64,8 +65,8 @@
 (defun LaTeX-polyglossia-prepare ()
   "Clear some polyglossia variables before use."
   (setq LaTeX-auto-polyglossia-lang nil
-	LaTeX-auto-polyglossia-setkeys nil
-	LaTeX-polyglossia-lang-list nil))
+        LaTeX-auto-polyglossia-setkeys nil
+        LaTeX-polyglossia-lang-list nil))
 
 (defun LaTeX-polyglossia-cleanup ()
   "Move languages and their options from
@@ -91,22 +92,22 @@
     (mapc
      (lambda (elt)
        (mapc
-	(lambda (language)
-	  ;; `opts' is the string of options for `language', set using
-	  ;; "\setdefaultlanguage" or "\setotherlanguage".
-	  (setq opts (cdr (cdr elt)))
-	  ;; `otheropts' is the string of options for `language' set using
-	  ;; "\setkeys".
-	  (setq otheropts
-		(car (cdr (assoc language LaTeX-auto-polyglossia-setkeys))))
-	  (add-to-list
-	   'LaTeX-polyglossia-lang-list
-	   (append
-	    (list language) (list (nth 1 elt))
-	    (unless (equal opts '(""))
-	      (LaTeX-listify-package-options (car opts)))
-	    (if otheropts (LaTeX-listify-package-options otheropts))) t))
-	(LaTeX-listify-package-options (car elt))))
+        (lambda (language)
+          ;; `opts' is the string of options for `language', set using
+          ;; "\setdefaultlanguage" or "\setotherlanguage".
+          (setq opts (cdr (cdr elt)))
+          ;; `otheropts' is the string of options for `language' set using
+          ;; "\setkeys".
+          (setq otheropts
+                (car (cdr (assoc language LaTeX-auto-polyglossia-setkeys))))
+          (add-to-list
+           'LaTeX-polyglossia-lang-list
+           (append
+            (list language) (list (nth 1 elt))
+            (unless (equal opts '(""))
+              (LaTeX-listify-package-options (car opts)))
+            (if otheropts (LaTeX-listify-package-options otheropts))) t))
+        (LaTeX-listify-package-options (car elt))))
      LaTeX-auto-polyglossia-lang)))
 
 (add-hook 'TeX-auto-prepare-hook #'LaTeX-polyglossia-prepare)
@@ -137,9 +138,12 @@ The last language is the default one."
     (mapc
      (lambda (elt)
        (setq default (or (string-equal "defaultlanguage" (nth 1 elt))
-			 (string-equal "mainlanguage" (nth 1 elt))))
+                         (string-equal "mainlanguage" (nth 1 elt))))
        ;; Append the language to the list if it's the default one.
-       (add-to-list 'active-languages (car elt) default))
+       (if default
+           (setq active-languages (append active-languages
+                                          (list (car elt))))
+         (push active-languages (car elt))))
      LaTeX-polyglossia-lang-list)
     active-languages))
 
@@ -148,7 +152,7 @@ The last language is the default one."
 The value is actually the tail of the list of options given to LANGUAGE."
   (member option (cdr (cdr (assoc language LaTeX-polyglossia-lang-list)))))
 
-(defun LaTeX-arg-polyglossia-lang (_optional default multiple setkeys)
+(defun LaTeX-arg-polyglossia-lang (_optional _default multiple setkeys)
   "Prompt for language and its options with completion and insert them
 as arguments.
 
@@ -156,77 +160,79 @@ This function is triggered by \"\setdefaultlanguage\",
 \"\setotherlanguage\", \"\setotherlanguages\", and \"\setkeys\"
 macros by polyglossia package.
 
-OPTIONAL is ignored, if DEFAULT is non-nil treat inserted
-language as default, if MULTIPLE is non-nil prompt for multiple
-languages, if SETKEYS is non-nil insert options as second
-mandatory argument."
+OPTIONAL and DEFAULT are ignored, if MULTIPLE is non-nil prompt
+for multiple languages, if SETKEYS is non-nil insert options as
+second mandatory argument."
   ;; DEFAULT =  t , MULTIPLE = nil, SETKEYS = nil: "\setdefaultlanguage".
   ;; DEFAULT = nil, MULTIPLE = nil, SETKEYS = nil: "\setotherlanguage".
   ;; DEFAULT = nil, MULTIPLE =  t , SETKEYS = nil: "\setotherlanguages".
   ;; DEFAULT = nil, MULTIPLE = nil, SETKEYS =  t : "\setkeys".
+
+  ;; Note: `DEFAULT' is currently ignored because we don't really have a
+  ;; mechanism to identify the default polyglossia language.
   (let ((language (funcall
-		   (if multiple
-		       'TeX-completing-read-multiple
-		     'completing-read)
-		   (if multiple "Languages: " "Language: ")
-		   (if setkeys
-		       (LaTeX-polyglossia-active-languages)
-		     LaTeX-polyglossia-language-list)))
-	var  options)
+                   (if multiple
+                       #'TeX-completing-read-multiple
+                     #'completing-read)
+                   (if multiple "Languages: " "Language: ")
+                   (if setkeys
+                       (LaTeX-polyglossia-active-languages)
+                     LaTeX-polyglossia-language-list)))
+        var  options)
     (if multiple
-	(mapc (lambda (elt) (TeX-run-style-hooks (concat "gloss-" elt)))
-	      language)
+        (mapc (lambda (elt) (TeX-run-style-hooks (concat "gloss-" elt)))
+              language)
       (TeX-run-style-hooks (concat "gloss-" language)))
     ;; "\setotherlanguages" doesn't take options, don't prompt for them.
     (setq options
-	  (if multiple ""
-	    (setq var (intern (format "LaTeX-polyglossia-%s-options-list" language)))
-	    (if (and (boundp var) (symbol-value var))
-		;; "\setdefaultlanguage" and "\setotherlanguage" use `options'
-		;; as first optional argument; "\setkeys" uses `options' as
-		;; second mandatory argument.
-		(TeX-read-key-val (not setkeys) (symbol-value var))
-	      ;; When `LaTeX-polyglossia-<lang>-options-list' is nil or not
-	      ;; defined, don't prompt for options.
-	      "")))
+          (if multiple ""
+            (setq var (intern (format "LaTeX-polyglossia-%s-options-list" language)))
+            (if (and (boundp var) (symbol-value var))
+                ;; "\setdefaultlanguage" and "\setotherlanguage" use `options'
+                ;; as first optional argument; "\setkeys" uses `options' as
+                ;; second mandatory argument.
+                (TeX-read-key-val (not setkeys) (symbol-value var))
+              ;; When `LaTeX-polyglossia-<lang>-options-list' is nil or not
+              ;; defined, don't prompt for options.
+              "")))
     (unless setkeys
       (let ((TeX-arg-opening-brace LaTeX-optop)
-	    (TeX-arg-closing-brace LaTeX-optcl))
-	(TeX-argument-insert options t)))
+            (TeX-arg-closing-brace LaTeX-optcl))
+        (TeX-argument-insert options t)))
     (if multiple
-	(setq language (mapconcat 'identity language ",")))
+        (setq language (mapconcat #'identity language ",")))
     (TeX-argument-insert language nil)
     (if setkeys
-	(TeX-argument-insert options nil))))
+        (TeX-argument-insert options nil))))
 
 (defun LaTeX-arg-polyglossiasetup-options (optional)
   "Prompt for setup options of polyglossia package.
 If OPTIONAL is non-nil, insert the resulting value as an optional
 argument, otherwise as a mandatory one."
   (TeX-arg-key-val optional
-		   '(("language") ;; TODO: add completion in `fontspec.el', see
-				  ;; "\newfontlanguage"s in `fontspec-xetex.sty'.
-		     ("hyphennames")
-		     ("script") ;; TODO: add completion in `fontspec.el', see
-				;; "\newfontscript"s in `fontspec-xetex.sty'.
-		     ("direction" ("RL" "LR"))
-		     ("scripttag")
-		     ("langtag")
-		     ("hyphenmins")
-		     ("frenchspacing" ("true" "false"))
-		     ("indentfirst" ("true" "false"))
-		     ("fontsetup" ("true" "false"))
-		     ;; The following options aren't already implemented but are
-		     ;; present in `polyglossia.sty' comments.
-		     ;; ("nouppercase" ("true" "false"))
-		     ;; ("localalph")
-		     ;; ("localnumber")
-		     )))
+                   '(("language") ;; TODO: add completion in `fontspec.el', see
+                                  ;; "\newfontlanguage"s in `fontspec-xetex.sty'.
+                     ("hyphennames")
+                     ("script") ;; TODO: add completion in `fontspec.el', see
+                                ;; "\newfontscript"s in `fontspec-xetex.sty'.
+                     ("direction" ("RL" "LR"))
+                     ("scripttag")
+                     ("langtag")
+                     ("hyphenmins")
+                     ("frenchspacing" ("true" "false"))
+                     ("indentfirst" ("true" "false"))
+                     ("fontsetup" ("true" "false"))
+                     ;; The following options aren't already implemented but are
+                     ;; present in `polyglossia.sty' comments.
+                     ;; ("nouppercase" ("true" "false"))
+                     ;; ("localalph")
+                     ;; ("localnumber")
+                     )))
 
 (defun LaTeX-polyglossia-load-languages ()
   "Load style files of babel active languages."
   (mapc (lambda (elt) (TeX-run-style-hooks (concat "gloss-" elt)))
-	(LaTeX-polyglossia-active-languages)))
+        (LaTeX-polyglossia-active-languages)))
 
 (TeX-add-style-hook
  "polyglossia"
@@ -236,15 +242,16 @@ argument, otherwise as a mandatory one."
     `(,LaTeX-polyglossia-lang-regexp (3 1 2) LaTeX-auto-polyglossia-lang))
    (TeX-auto-add-regexp
     `(,LaTeX-polyglossia-setkeys-regexp (1 2) LaTeX-auto-polyglossia-setkeys))
-   (TeX-run-style-hooks "etoolbox" "makecmds" "xkeyval" "fontspec")
+   (TeX-run-style-hooks "makecmds" "xkeyval" "fontspec")
    (TeX-add-symbols
     '("setdefaultlanguage" (LaTeX-arg-polyglossia-lang  t  nil nil))
     '("setmainlanguage"    (LaTeX-arg-polyglossia-lang  t  nil nil))
     '("setotherlanguage"   (LaTeX-arg-polyglossia-lang nil nil nil))
     '("setotherlanguages"  (LaTeX-arg-polyglossia-lang nil  t  nil))
     '("setkeys"            (LaTeX-arg-polyglossia-lang nil nil  t ))
-    '("PolyglossiaSetup"   (TeX-arg-eval completing-read "Language: "
-					 (LaTeX-polyglossia-active-languages))
+    '("PolyglossiaSetup"   (TeX-arg-completing-read
+                            (LaTeX-polyglossia-active-languages)
+                            "Language")
       LaTeX-arg-polyglossiasetup-options)
     "selectbackgroundlanguage"
     '("resetdefaultlanguage" ["argument"] 1)
@@ -263,14 +270,14 @@ argument, otherwise as a mandatory one."
 
    ;; Fontification
    (when (and (featurep 'font-latex)
-	      (eq TeX-install-font-lock 'font-latex-setup))
+              (eq TeX-install-font-lock 'font-latex-setup))
      (font-latex-add-keywords '(("setdefaultlanguage" "[{")
-				("setmainlanguage" "[{")
-				("setotherlanguage" "[{")
-				("setotherlanguages" "{")
-				("setkeys" "{{"))
-			      'function)))
- LaTeX-dialect)
+                                ("setmainlanguage" "[{")
+                                ("setotherlanguage" "[{")
+                                ("setotherlanguages" "{")
+                                ("setkeys" "{{"))
+                              'function)))
+ TeX-dialect)
 
 ;; TODO: move each option variable in its specific `gloss-<lang>.el' file.
 (defvar LaTeX-polyglossia-arabic-options-list

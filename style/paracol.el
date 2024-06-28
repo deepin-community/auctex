@@ -1,6 +1,6 @@
-;;; paracol.el --- AUCTeX style for `paracol.sty' (v1.35)
+;;; paracol.el --- AUCTeX style for `paracol.sty' (v1.35)  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2016--2019 Free Software Foundation, Inc.
+;; Copyright (C) 2016--2022 Free Software Foundation, Inc.
 
 ;; Author: Arash Esbati <arash@gnu.org>
 ;; Maintainer: auctex-devel@gnu.org
@@ -46,20 +46,23 @@
 
 ;;; Code:
 
+(require 'tex)
+(require 'latex)
+
 ;; Silence the compiler:
 (declare-function font-latex-add-keywords
-		  "font-latex"
-		  (keywords class))
+                  "font-latex"
+                  (keywords class))
 
 (defun TeX-arg-paracol-switchcolumn* (optional)
   "Query and insert the column argument of \\switchcolum macro.
 If OPTIONAL is non-nil, insert the result in square brackets."
   (let ((col (TeX-read-string
-	      (TeX-argument-prompt optional nil "Column"))))
+              (TeX-argument-prompt optional nil "Column"))))
     (when (and col (not (string= col "")))
       (save-excursion
-	(backward-char 1)
-	(TeX-argument-insert col optional)))))
+        (backward-char 1)
+        (TeX-argument-insert col optional)))))
 
 (TeX-add-style-hook
  "paracol"
@@ -72,24 +75,24 @@ If OPTIONAL is non-nil, insert the result in square brackets."
     '("paracol" [ "Number left" ] "Number of columns" [ "Text across columns" ] )
     '("paracol*"
       (lambda (_env)
-	(let ((numleft (TeX-read-string
-			(TeX-argument-prompt  t  nil "Number left")))
-	      (numcol  (TeX-read-string
-			(TeX-argument-prompt nil nil "Number of columns")))
-	      (txt     (TeX-read-string
-			(TeX-argument-prompt  t  nil "Text across columns"))))
-	  (LaTeX-insert-environment
-	   ;; Simply feed the function with "paracol", other option is
-	   ;; something like:
-	   ;; (replace-regexp-in-string (regexp-quote "*") "" env)
-	   "paracol"
-	   (concat
-	    (when (and numleft (not (string= numleft "")))
-	      (format "[%s]" numleft))
-	    "*"
-	    (format "{%s}" numcol)
-	    (when (and txt (not (string= txt "")))
-	      (format "[%s]" txt)))))))
+        (let ((numleft (TeX-read-string
+                        (TeX-argument-prompt  t  nil "Number left")))
+              (numcol  (TeX-read-string
+                        (TeX-argument-prompt nil nil "Number of columns")))
+              (txt     (TeX-read-string
+                        (TeX-argument-prompt  t  nil "Text across columns"))))
+          (LaTeX-insert-environment
+           ;; Simply feed the function with "paracol", other option is
+           ;; something like:
+           ;; (replace-regexp-in-string (regexp-quote "*") "" env)
+           "paracol"
+           (concat
+            (when (and numleft (not (string= numleft "")))
+              (format "[%s]" numleft))
+            "*"
+            (format "{%s}" numcol)
+            (when (and txt (not (string= txt "")))
+              (format "[%s]" txt)))))))
 
     ;; 7.2 Column-Switching Command and Environments
     ;; \begin{column} body \end{column}
@@ -154,9 +157,7 @@ If OPTIONAL is non-nil, insert the result in square brackets."
 
     ;; 7.6 Page-Wise Footnotes
     '("footnotelayout"
-      (TeX-arg-eval completing-read
-		    (TeX-argument-prompt optional nil "Layout")
-		    '("c" "m" "p")))
+      (TeX-arg-completing-read ("c" "m" "p") "Layout"))
 
     ;; \footnote*[num]{text}
     ;; \footnotemark*[num]
@@ -181,8 +182,8 @@ If OPTIONAL is non-nil, insert the result in square brackets."
     ;; command with the same name but different arguments.  We add
     ;; the command only here but not for fontification
     '("columncolor" (TeX-arg-conditional (member "xcolor" (TeX-style-list))
-					 (TeX-arg-xcolor)
-					 (TeX-arg-color))
+                                         (TeX-arg-xcolor)
+                                         (TeX-arg-color))
       [ "Column" ] )
 
     ;; \normalcolumncolor[col]
@@ -193,8 +194,8 @@ If OPTIONAL is non-nil, insert the result in square brackets."
     ;; \colseprulecolor[mode]{color}[col]
     ;; \normalcolseprulecolor[col]
     '("colseprulecolor" (TeX-arg-conditional (member "xcolor" (TeX-style-list))
-					     (TeX-arg-xcolor)
-					     (TeX-arg-color))
+                                             (TeX-arg-xcolor)
+                                             (TeX-arg-color))
       [ "Column" ] )
     '("normalcolseprulecolor" [ "Column" ] )
 
@@ -203,20 +204,18 @@ If OPTIONAL is non-nil, insert the result in square brackets."
     ;; \backgroundcolor{region(x0,y0)}[mode]{color}
     ;; \backgroundcolor{region(x0,y0)(x1,y1)}[mode]{color}
     '("backgroundcolor"
-      (TeX-arg-eval completing-read
-		    (TeX-argument-prompt optional nil "Region")
-		    '("c" "g" "s" "f" "n" "p" "t" "b" "l" "r"
-		      "C" "G" "S" "F" "N" "P" "T" "B" "L" "R"))
+      (TeX-arg-completing-read ("c" "g" "s" "f" "n" "p" "t" "b" "l" "r"
+                                "C" "G" "S" "F" "N" "P" "T" "B" "L" "R")
+                               "Region")
       (TeX-arg-conditional (member "xcolor" (TeX-style-list))
-			   (TeX-arg-xcolor)
-			   (TeX-arg-color)))
+                           (TeX-arg-xcolor)
+                           (TeX-arg-color)))
 
     ;; \nobackgroundcolor{region}
     '("nobackgroundcolor"
-      (TeX-arg-eval completing-read
-		    (TeX-argument-prompt optional nil "Region")
-		    '("c" "g" "s" "f" "n" "p" "t" "b" "l" "r"
-		      "C" "G" "S" "F" "N" "P" "T" "B" "L" "R")))
+      (TeX-arg-completing-read ("c" "g" "s" "f" "n" "p" "t" "b" "l" "r"
+                                "C" "G" "S" "F" "N" "P" "T" "B" "L" "R")
+                               "Region"))
 
     ;; \resetbackgroundcolor
     '("resetbackgroundcolor" 0)
@@ -224,9 +223,7 @@ If OPTIONAL is non-nil, insert the result in square brackets."
     ;; 7.9 Control of Contents Output
     ;; \addcontentsonly{file}{col}
     '("addcontentsonly"
-      (TeX-arg-eval completing-read
-		    (TeX-argument-prompt optional nil "Content file")
-		    '("toc" "lof" "lot"))
+      (TeX-arg-completing-read ("toc" "lof" "lot") "Content file")
       "Column")
 
     ;; 7.10 Page Flushing Commands
@@ -240,50 +237,50 @@ If OPTIONAL is non-nil, insert the result in square brackets."
 
    ;; Fontification
    (when (and (featurep 'font-latex)
-	      (eq TeX-install-font-lock 'font-latex-setup))
-     (font-latex-add-keywords '(("switchcolumn"			"*["))
-			      ;; FIXME: Syntax is
-			      ;; \switchcolumn[num]*[text].
-			      ;; font-latex.el doesn't handle the case
-			      ;; where `*' comes after the first `['.
-			      ;; Therefore, we use this compromise to
-			      ;; get something fontified at least.
-			      'textual)
-     (font-latex-add-keywords '(("flushpage"			"*["))
-			      'warning)
-     (font-latex-add-keywords '(("footnote"			"*[{")
-				("footnotemark"			"*[")
-				("footnotetext"			"*[{"))
-			      'reference)
+              (eq TeX-install-font-lock 'font-latex-setup))
+     (font-latex-add-keywords '(("switchcolumn"                 "*["))
+                              ;; FIXME: Syntax is
+                              ;; \switchcolumn[num]*[text].
+                              ;; font-latex.el doesn't handle the case
+                              ;; where `*' comes after the first `['.
+                              ;; Therefore, we use this compromise to
+                              ;; get something fontified at least.
+                              'textual)
+     (font-latex-add-keywords '(("flushpage"                    "*["))
+                              'warning)
+     (font-latex-add-keywords '(("footnote"                     "*[{")
+                                ("footnotemark"                 "*[")
+                                ("footnotetext"                 "*[{"))
+                              'reference)
      (font-latex-add-keywords '(("definecolumnpreamble"         "{{")
-				("ensurevspace"			"{")
-				("columnratio"			"{[")
-				("setcolumnwidth"		"{[")
-				("twosided"			"[")
-				("marginparthreshold"		"{[")
-				;; FIXME: Syntax is
-				;; \globalcounter{ctr} or
-				;; \globalcounter* We ignore `{' since
-				;; font-latex.el doesn't handle a
-				;; missing bracket nicely.
-				("globalcounter"		"*")
-				("definethecounter"		"{{{")
-				("synccounter"			"{")
-				("syncallcounters"		"")
-				("footnotelayout"		"{")
-				("fncounteradjustment"		"")
-				("nofncounteradjustment"	"")
-				("normalcolumncolor"		"[")
-				("coloredwordhyphenated"	"")
-				("nocoloredwordhyphenated"	"")
-				("colseprulecolor"		"[{[")
-				("normalcolseprulecolor"	"[")
-				("backgroundcolor"		"{[{")
-				("nobackgroundcolor"		"{")
-				("resetbackgroundcolor"		"")
-				("addcontentsonly"		"{{"))
-			      'function)))
- LaTeX-dialect)
+                                ("ensurevspace"                 "{")
+                                ("columnratio"                  "{[")
+                                ("setcolumnwidth"               "{[")
+                                ("twosided"                     "[")
+                                ("marginparthreshold"           "{[")
+                                ;; FIXME: Syntax is
+                                ;; \globalcounter{ctr} or
+                                ;; \globalcounter* We ignore `{' since
+                                ;; font-latex.el doesn't handle a
+                                ;; missing bracket nicely.
+                                ("globalcounter"                "*")
+                                ("definethecounter"             "{{{")
+                                ("synccounter"                  "{")
+                                ("syncallcounters"              "")
+                                ("footnotelayout"               "{")
+                                ("fncounteradjustment"          "")
+                                ("nofncounteradjustment"        "")
+                                ("normalcolumncolor"            "[")
+                                ("coloredwordhyphenated"        "")
+                                ("nocoloredwordhyphenated"      "")
+                                ("colseprulecolor"              "[{[")
+                                ("normalcolseprulecolor"        "[")
+                                ("backgroundcolor"              "{[{")
+                                ("nobackgroundcolor"            "{")
+                                ("resetbackgroundcolor"         "")
+                                ("addcontentsonly"              "{{"))
+                              'function)))
+ TeX-dialect)
 
 (defvar LaTeX-paracol-package-options nil
   "Package options for the paracol package.")

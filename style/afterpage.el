@@ -1,6 +1,6 @@
-;;; afterpage.el --- AUCTeX style for `afterpage.sty'
+;;; afterpage.el --- AUCTeX style for `afterpage.sty'  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2013 Free Software Foundation, Inc.
+;; Copyright (C) 2013--2022 Free Software Foundation, Inc.
 
 ;; Author: Mads Jensen <mje@inducks.org>
 ;; Maintainer: auctex-devel@gnu.org
@@ -30,12 +30,27 @@
 
 ;;; Code:
 
+(require 'tex)
+
+;; Silence the compiler:
+(declare-function font-latex-add-keywords
+                  "font-latex"
+                  (keywords class))
+
 (TeX-add-style-hook
  "afterpage"
  (lambda ()
    (TeX-add-symbols
-    '("afterpage" t)))
- LaTeX-dialect)
+    '("afterpage" t))
+
+   ;; Fontification
+   (when (and (featurep 'font-latex)
+              (eq TeX-install-font-lock 'font-latex-setup))
+     ;; Don't fontify the argument since it will contain (La)TeX code
+     ;; which probably has its own fontification:
+     (font-latex-add-keywords '(("afterpage" ""))
+                              'function)))
+ TeX-dialect)
 
 (defvar LaTeX-afterpage-package-options nil
   "Package options for afterpage.")

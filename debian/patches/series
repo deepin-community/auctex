@@ -1,6 +1,7 @@
 0001-doc-Makefile.in-Rationalize-HTML-documentation-targe.patch
 0002-doc-Makefile.in-Rationalize-dist-target.patch
-0003-preview-latex-Makefile.in-Also-clean-PDF-docs.patch
-0004-TeX-view-program-selection-Customize-for-Debian.patch
-0005-TeX-auto-global-Customize-for-Debian.patch
-0006-preview-image-type-Customize-for-Debian.patch
+0003-TeX-view-program-selection-Customize-for-Debian.patch
+0004-TeX-auto-global-Customize-for-Debian.patch
+0005-preview-image-type-Customize-for-Debian.patch
+0006-Use-UTF-8.patch
+0007-Set-timestamp-on-generated-preview-latex.el-file.patch

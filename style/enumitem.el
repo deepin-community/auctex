@@ -1,6 +1,6 @@
-;;; enumitem.el --- AUCTeX style for `enumitem.sty' (v3.6)
+;;; enumitem.el --- AUCTeX style for `enumitem.sty' (v3.9)  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2015, 2016, 2018 Free Software Foundation, Inc.
+;; Copyright (C) 2015--2023 Free Software Foundation, Inc.
 
 ;; Author: Arash Esbati <arash@gnu.org>
 ;; Maintainer: auctex-devel@gnu.org
@@ -26,7 +26,7 @@
 
 ;;; Commentary:
 
-;; This file adds support for `enumitem.sty' (v3.6) from 2018/11/30.
+;; This file adds support for `enumitem.sty' (v3.9) from 2019/06/20.
 ;; `enumitem.sty' is part of TeXLive.
 
 ;; Tassilo Horn's `minted.el' was a major source of inspiration for
@@ -38,53 +38,30 @@
 
 ;;; Code:
 
+(require 'tex)
+(require 'latex)
 (eval-when-compile
   (require 'cl-lib))
 
-;; Needed for auto-parsing:
-(require 'tex)
-
 ;; Silence the compiler:
 (declare-function font-latex-add-keywords
-		  "font-latex"
-		  (keywords class))
+                  "font-latex"
+                  (keywords class))
 
 (defvar LaTeX-enumitem-key-val-options
   `(;; 3.1 Label and cross references format
     ("label"  ("\\alph*"  "\\Alph*"  "\\arabic*"
-	       "\\roman*" "\\Roman*" "\\value*"))
+               "\\roman*" "\\Roman*" "\\value*"))
     ("label*" ("\\alph*"  "\\Alph*"  "\\arabic*"
-	       "\\roman*" "\\Roman*" "\\value*"))
+               "\\roman*" "\\Roman*" "\\value*"))
     ("ref"    ("\\alph*"  "\\Alph*"  "\\arabic*"
-	       "\\roman*" "\\Roman*" "\\value*"))
-    ("font" ,(mapcar (lambda (mac)
-		       (concat TeX-esc mac))
-		     '(;; family
-		       "rmfamily" "sffamily" "ttfamily"
-		       ;; series
-		       "mdseries" "bfseries"
-		       ;; shape
-		       "upshape" "itshape" "slshape" "scshape"
-		       ;; size
-		       "tiny"  "scriptsize" "footnotesize"
-		       "small" "normalsize" "large"
-		       "Large" "LARGE" "huge" "Huge"
-		       ;; reset macro
-		       "normalfont")))
-    ("format" ,(mapcar (lambda (mac)
-			 (concat TeX-esc mac))
-		       '(;; family
-			 "rmfamily" "sffamily" "ttfamily"
-			 ;; series
-			 "mdseries" "bfseries"
-			 ;; shape
-			 "upshape" "itshape" "slshape" "scshape"
-			 ;; size
-			 "tiny"  "scriptsize" "footnotesize"
-			 "small" "normalsize" "large"
-			 "Large" "LARGE" "huge" "Huge"
-			 ;; reset macro
-			 "normalfont")))
+               "\\roman*" "\\Roman*" "\\value*"))
+    ("font" ,(mapcar (lambda (mac) (concat TeX-esc mac))
+                     (append LaTeX-font-family LaTeX-font-series
+                             LaTeX-font-shape  LaTeX-font-size)))
+    ("format" ,(mapcar (lambda (mac) (concat TeX-esc mac))
+                       (append LaTeX-font-family LaTeX-font-series
+                               LaTeX-font-shape  LaTeX-font-size)))
     ("align" ("left" "right" "parleft"))
     ;; 3.2 Horizontal spacing of labels
     ("labelindent" ("*" "!"))
@@ -113,18 +90,19 @@
     ("beginpenalty")
     ("midpenalty")
     ("endpenalty")
+    ;; 3.6 Injecting code
     ("before")
     ("before*")
     ("after")
     ("after*")
     ("first")
     ("first*")
-    ;; 3.6 Description styles
+    ;; 3.7 Description styles
     ("style" ("standard" "unboxed" "nextline" "sameline" "multiline"))
-    ;; 3.7 Compact lists
+    ;; 3.8 Compact lists
     ("noitemsep")
     ("nosep")
-    ;; 3.8 Wide lists
+    ;; 3.9 Wide lists
     ("wide")
     ;; 4 Inline lists
     ("itemjoin")
@@ -133,14 +111,48 @@
     ("mode" ("boxed" "unboxed")))
   "Key=value options for enumitem macros and environments.")
 
-(defvar LaTeX-enumitem-key-val-options-local nil
-  "Buffer-local key=value options for enumitem macros and environments.")
-(make-variable-buffer-local 'LaTeX-enumitem-key-val-options-local)
-
-(defvar LaTeX-enumitem-newlist-list-local nil
-  "Local list of all environments definded with `\\newlist' plus
-the ones initially available through `enumitem' package.")
-(make-variable-buffer-local 'LaTeX-enumitem-newlist-list-local)
+(defun LaTeX-enumitem-key-val-options ()
+  "Return an updated list of key=vals from enumitem package."
+  (append
+   ;; New keys are valueless, so take them as is:
+   (when (LaTeX-enumitem-SetEnumitemKey-list)
+     (LaTeX-enumitem-SetEnumitemKey-list))
+   ;; New values defined available keys: We have to collect predefined
+   ;; values (if any) from `LaTeX-enumitem-key-val-options' (stored in
+   ;; `vals-predefined') and user-defined values (stored in
+   ;; `vals-parsed') which were parsed and added to `result' in the
+   ;; previous run of `dolist' and then combine them as value to a
+   ;; key.
+   (when (LaTeX-enumitem-SetEnumitemValue-list)
+     (let (result)
+       (dolist (keyvals (LaTeX-enumitem-SetEnumitemValue-list) result)
+         (let* ((key (nth 1 keyvals))
+                (val (nth 2 keyvals))
+                (vals-predefined
+                 (cadr (assoc key LaTeX-enumitem-key-val-options)))
+                (vals-parsed (cadr (assoc key result))))
+           ;; Remove entry in `result' if there is one for the `key':
+           (when (assoc key result)
+             (setq result (assq-delete-all (car (assoc key result))
+                                           result)))
+           ;; Add the entry to `result'; also remove any duplicates
+           (cl-pushnew (list key (TeX-delete-duplicate-strings
+                                  (append vals-parsed
+                                          vals-predefined
+                                          (list val))))
+                       result :test #'equal)))))
+   ;; New values to `align' key: We collect the predefined ones from
+   ;; `LaTeX-enumitem-key-val-options' in `vals-predefined' and
+   ;; prepend them to newly parsed ones:
+   (when (LaTeX-enumitem-SetLabelAlign-list)
+     (let* ((key "align")
+            (vals (mapcar #'car (LaTeX-enumitem-SetLabelAlign-list)))
+            (vals-predefined (cadr
+                              (assoc key LaTeX-enumitem-key-val-options))))
+       `(("align" ,(TeX-delete-duplicate-strings
+                    (append vals-predefined vals))))))
+   ;; Predefined key=vals:
+   LaTeX-enumitem-key-val-options))
 
 ;; Setup for \newlist:
 
@@ -149,8 +161,7 @@ the ones initially available through `enumitem' package.")
 (defvar LaTeX-enumitem-newlist-regexp
   '("\\\\newlist{\\([^}]+\\)}{\\([^}]+\\)}"
     (1 2) LaTeX-auto-enumitem-newlist)
-  "Matches the arguments of `\\newlist' from `enumitem'
-package.")
+  "Matches the arguments of `\\newlist' from `enumitem' package.")
 
 ;; Setup for \SetLabelAlign:
 
@@ -159,8 +170,7 @@ package.")
 (defvar LaTeX-enumitem-SetLabelAlign-regexp
   '("\\\\SetLabelAlign{\\([^}]+\\)}"
     1 LaTeX-auto-enumitem-SetLabelAlign)
-  "Matches the argument of `\\SetLabelAlign' from `enumitem'
-package.")
+  "Matches the argument of `\\SetLabelAlign' from `enumitem' package.")
 
 ;; Setup for \SetEnumitemKey:
 
@@ -169,8 +179,7 @@ package.")
 (defvar LaTeX-enumitem-SetEnumitemKey-regexp
   '("\\\\SetEnumitemKey{\\([^}]+\\)}"
     1 LaTeX-auto-enumitem-SetEnumitemKey)
-  "Matches the arguments of `\\SetEnumitemKey' from `enumitem'
-package.")
+  "Matches the arguments of `\\SetEnumitemKey' from `enumitem' package.")
 
 ;; Setup for \SetEnumitemValue:
 
@@ -186,16 +195,15 @@ package.")
 (defvar LaTeX-enumitem-SetEnumitemValue-regexp
   '("\\\\SetEnumitemValue{\\([^}]+\\)}{\\([^}]+\\)}"
     (0 1 2) LaTeX-auto-enumitem-SetEnumitemValue)
-  "Matches the arguments of `\\SetEnumitemValue' from `enumitem'
-package.")
+  "Matches the arguments of `\\SetEnumitemValue' from `enumitem' package.")
 
 ;; Plug them into the machinery.
 (defun LaTeX-enumitem-auto-prepare ()
   "Clear various `LaTeX-enumitem-*' before parsing."
   (setq LaTeX-auto-enumitem-newlist          nil
-	LaTeX-auto-enumitem-SetLabelAlign    nil
-	LaTeX-auto-enumitem-SetEnumitemKey   nil
-	LaTeX-auto-enumitem-SetEnumitemValue nil))
+        LaTeX-auto-enumitem-SetLabelAlign    nil
+        LaTeX-auto-enumitem-SetEnumitemKey   nil
+        LaTeX-auto-enumitem-SetEnumitemValue nil))
 
 (defun LaTeX-enumitem-auto-cleanup ()
   "Move parsing results into right places for further usage."
@@ -203,74 +211,38 @@ package.")
   ;; env=<name>, type=<type>, ignored=<max-depth>
   (dolist (env-type (LaTeX-enumitem-newlist-list))
     (let* ((env  (car env-type))
-	   (type (cadr env-type)))
-      (LaTeX-add-environments (list env 'LaTeX-enumitem-env-with-opts))
+           (type (cadr env-type)))
+      (LaTeX-add-environments
+       `(,env LaTeX-env-item-args
+              [TeX-arg-key-val (LaTeX-enumitem-key-val-options)]))
       ;; Tell AUCTeX about parsed description like environments.
-      (when (or (string-equal type "description")
-		(string-equal type "description*"))
-	(add-to-list 'LaTeX-item-list `(,env . LaTeX-item-argument)))
-      ;; Add new env's to `ispell-tex-skip-alist': skip the optional argument
-      (TeX-ispell-skip-setcdr `((,env ispell-tex-arg-end 0)))))
-  ;; Now add the parsed env's to the local list.
-  (when (LaTeX-enumitem-newlist-list)
-    (setq LaTeX-enumitem-newlist-list-local
-	  (append (mapcar #'list (mapcar #'car (LaTeX-enumitem-newlist-list)))
-		  LaTeX-enumitem-newlist-list-local))))
+      (when (member type '("description" "description*"))
+        (add-to-list 'LaTeX-item-list `(,env . LaTeX-item-argument)))
+      ;; Add new env's to `ispell-tex-skip-alists' and skip the
+      ;; opt. arg, ignore evn's already added in `tex-ispell.el':
+      (unless (member env '("itemize"  "enumerate"  "description"
+                            "itemize*" "enumerate*" "description*"))
+        (TeX-ispell-skip-setcdr `((,env ispell-tex-arg-end 0)))))))
 
 (add-hook 'TeX-auto-prepare-hook #'LaTeX-enumitem-auto-prepare t)
 (add-hook 'TeX-auto-cleanup-hook #'LaTeX-enumitem-auto-cleanup t)
 (add-hook 'TeX-update-style-hook #'TeX-auto-parse t)
 
-(defun LaTeX-enumitem-env-with-opts (env)
-  "Update available key-val options, then insert ENV and optional
-key-val and the first item."
-  (LaTeX-enumitem-update-key-val-options)
-  (LaTeX-insert-environment
-   env
-   (let ((opts (TeX-read-key-val t LaTeX-enumitem-key-val-options-local)))
-     (when (and opts (not (string-equal opts "")))
-       (format "[%s]" opts))))
-  (if (TeX-active-mark)
-      (progn
-	(LaTeX-find-matching-begin)
-	(end-of-line 1))
-    (end-of-line 0))
-  (delete-char 1)
-  (when (looking-at (concat "^[ \t]+$\\|"
-			    "^[ \t]*" TeX-comment-start-regexp "+[ \t]*$"))
-    (delete-region (point) (line-end-position)))
-  (delete-horizontal-space)
-  ;; Deactivate the mark here in order to prevent `TeX-parse-macro'
-  ;; from swapping point and mark and the \item ending up right after
-  ;; \begin{...}.
-  (deactivate-mark)
-  (LaTeX-insert-item)
-  ;; The inserted \item may have outdented the first line to the
-  ;; right.  Fill it, if appropriate.
-  (when (and (not (looking-at "$"))
-	     (not (assoc env LaTeX-indent-environment-list))
-	     (> (- (line-end-position) (line-beginning-position))
-		(current-fill-column)))
-    (LaTeX-fill-paragraph nil)))
+(defun LaTeX-arg-enumitem-SetLabelAlign (optional)
+  "Ask and insert a new type (value) for the \"align\" key.
+Insert value in brackets if OPTIONAL is non-nil."
+  (let ((val (TeX-read-string
+              (TeX-argument-prompt optional nil "Alignment"))))
+    (LaTeX-add-enumitem-SetLabelAligns val)
+    (TeX-argument-insert val optional)))
 
-(defun LaTeX-arg-SetLabelAlign (optional)
-  "Ask for new type (value) for the \"align\" key and add it to
-`LaTeX-enumitem-key-val-options-local'."
-  (LaTeX-enumitem-update-key-val-options)
-  (let ((val (TeX-read-string "Alignment: ")))
-    (TeX-argument-insert val optional)
-    (LaTeX-add-enumitem-SetLabelAligns val)))
-
-(defun LaTeX-arg-SetEnumitemKey (optional)
-  "Ask for a new key to be defined and add it to
-`LaTeX-enumitem-key-val-options-local'."
-  (LaTeX-enumitem-update-key-val-options)
-  (let ((key     (TeX-read-string "New Key: "))
-	(replace (TeX-read-key-val optional
-				   LaTeX-enumitem-key-val-options-local "Replacement")))
-    (TeX-argument-insert key     optional)
-    (TeX-argument-insert replace optional)
-    (LaTeX-add-enumitem-SetEnumitemKeys key)))
+(defun LaTeX-arg-enumitem-SetEnumitemKey (optional)
+  "Ask and insert a new enumitem key option.
+Insert key and value in brackets if OPTIONAL is non-nil."
+  (let ((key (TeX-read-string
+              (TeX-argument-prompt optional nil "New Key"))))
+    (LaTeX-add-enumitem-SetEnumitemKeys key)
+    (TeX-argument-insert key optional)))
 
 ;; In `LaTeX-enumitem-SetEnumitemValue-regexp', we match (0 1 2).
 ;; When adding a new `key=val', we need something unique for `0'-match
@@ -278,44 +250,22 @@ key-val and the first item."
 ;; the elements and pass the result to
 ;; `LaTeX-add-enumitem-SetEnumitemValues'.  It will vanish upon next
 ;; invocation of `C-c C-n'.
-(defun LaTeX-arg-SetEnumitemValue (optional)
-  "Ask for a new value added to an existing key incl. the final
-replacement of the value."
-  (LaTeX-enumitem-update-key-val-options)
-  (let ((key (completing-read  "Key: " LaTeX-enumitem-key-val-options-local))
-	(val (TeX-read-string "String value: ")))
-    (TeX-argument-insert key optional)
-    (TeX-argument-insert val optional)
-    (LaTeX-add-enumitem-SetEnumitemValues
-     (list (concat "\\SetEnumitemValue{" key "}{" val "}")
-	   key val))))
-
-(defun LaTeX-enumitem-update-key-val-options ()
-  "Update the buffer-local key-val options before offering them
-in `enumitem'-completions."
-  (dolist (key (LaTeX-enumitem-SetEnumitemKey-list))
-    (add-to-list 'LaTeX-enumitem-key-val-options-local key))
-  (dolist (keyvals (LaTeX-enumitem-SetEnumitemValue-list))
-    (let* ((key (nth 1 keyvals))
-	   (val (nth 2 keyvals))
-	   ;; (key-match (car (assoc key LaTeX-enumitem-key-val-options-local)))
-	   (val-match (cdr (assoc key LaTeX-enumitem-key-val-options-local)))
-	   (temp (copy-alist LaTeX-enumitem-key-val-options-local))
-	   (opts (assq-delete-all (car (assoc key temp)) temp)))
-      (if val-match
-	  (cl-pushnew (list key (TeX-delete-duplicate-strings (apply #'append (list val) val-match)))
-		      opts :test #'equal)
-	(cl-pushnew (list key (list val)) opts :test #'equal))
-      (setq LaTeX-enumitem-key-val-options-local (copy-alist opts))))
-  (dolist (newalign (LaTeX-enumitem-SetLabelAlign-list))
-    (let* ((key "align")
-	   (val (car newalign))
-	   (val-match (cdr (assoc key LaTeX-enumitem-key-val-options-local)))
-	   (temp (copy-alist LaTeX-enumitem-key-val-options-local))
-	   (opts (assq-delete-all (car (assoc key temp)) temp)))
-      (cl-pushnew (list key (TeX-delete-duplicate-strings (apply #'append (list val) val-match)))
-		  opts :test #'equal)
-      (setq LaTeX-enumitem-key-val-options-local (copy-alist opts)))))
+(defun LaTeX-arg-enumitem-SetEnumitemValue (optional)
+  "Ask and insert for a new value added to an existing key.
+This is the second mandatory argument of \\SetEnumitemValue
+macro.  Insert the value in brackets if OPTIONAL is non-nil."
+  (let ((key (when (= (preceding-char) (string-to-char TeX-grcl))
+               (save-excursion
+                 (re-search-backward "\\\\SetEnumitemValue{\\([^}]+\\)}"
+                                     (line-beginning-position) t)
+                 (match-string-no-properties 1))))
+        (val (TeX-read-string
+              (TeX-argument-prompt optional nil "String value"))))
+    (when key
+      (LaTeX-add-enumitem-SetEnumitemValues
+       (list (concat "\\SetEnumitemValue{" key "}{" val "}")
+             key val)))
+    (TeX-argument-insert val optional)))
 
 (TeX-add-style-hook
  "enumitem"
@@ -327,109 +277,108 @@ in `enumitem'-completions."
    (TeX-auto-add-regexp LaTeX-enumitem-SetEnumitemValue-regexp)
    (TeX-auto-add-regexp LaTeX-enumitem-SetLabelAlign-regexp)
 
-   ;; Activate the buffer-local version of key-vals.
-   (setq LaTeX-enumitem-key-val-options-local
-	 (copy-alist LaTeX-enumitem-key-val-options))
+   ;; Add the standard environments:
+   (LaTeX-add-enumitem-newlists '("itemize"     "itemize")
+                                '("enumerate"   "enumerate")
+                                '("description" "description"))
 
-   ;; Set the standard env's to the local list.
-   (setq LaTeX-enumitem-newlist-list-local
-	 '(("itemize") ("enumerate") ("description")))
-
-   ;; Add the starred versions to the local list.
+   ;; Add the starred versions with the 'inline' package option:
    (when (LaTeX-provided-package-options-member "enumitem" "inline")
-     (setq LaTeX-enumitem-newlist-list-local
-	   (append '(("itemize*") ("enumerate*") ("description*"))
-		   LaTeX-enumitem-newlist-list-local)))
+     (LaTeX-add-enumitem-newlists '("itemize*"     "itemize*")
+                                  '("enumerate*"   "enumerate*")
+                                  '("description*" "description*")))
 
    ;; Standard env's take key-val as optional argument.
    (LaTeX-add-environments
-    '("itemize"      LaTeX-enumitem-env-with-opts)
-    '("enumerate"    LaTeX-enumitem-env-with-opts)
-    '("description"  LaTeX-enumitem-env-with-opts))
+    '("itemize"     LaTeX-env-item-args
+      [TeX-arg-key-val (LaTeX-enumitem-key-val-options)])
+    '("enumerate"    LaTeX-env-item-args
+      [TeX-arg-key-val (LaTeX-enumitem-key-val-options)])
+    '("description"  LaTeX-env-item-args
+      [TeX-arg-key-val (LaTeX-enumitem-key-val-options)]))
 
    ;; Make inline env's available with package option "inline"
    (when (LaTeX-provided-package-options-member "enumitem" "inline")
      (LaTeX-add-environments
-      '("itemize*"     LaTeX-enumitem-env-with-opts)
-      '("enumerate*"   LaTeX-enumitem-env-with-opts)
-      '("description*" LaTeX-enumitem-env-with-opts))
+      '("itemize*"      LaTeX-env-item-args
+        [TeX-arg-key-val (LaTeX-enumitem-key-val-options)])
+      '("enumerate*"    LaTeX-env-item-args
+        [TeX-arg-key-val (LaTeX-enumitem-key-val-options)])
+      '("description*"  LaTeX-env-item-args
+        [TeX-arg-key-val (LaTeX-enumitem-key-val-options)]))
      (add-to-list 'LaTeX-item-list '("description*" . LaTeX-item-argument)))
 
-   ;; 7 Cloning the basic lists
    (TeX-add-symbols
-    ;; The easy way would be:
-    ;; '("newlist"
-    ;;   "Name" (TeX-arg-eval
-    ;;           completing-read "Type: "
-    ;;                 '(("itemize")  ("enumerate")  ("description")
-    ;;                   ("itemize*") ("enumerate*") ("description*")))
-    ;;  "Max-depth")
-    ;; But we go the extra mile to improve the user experience and add
-    ;; the arguments directly to appropriate lists.
+    ;; 6 Size dependent settings
+    '("SetEnumitemSize" 2)
+
+    ;; 7 Cloning the basic lists
     ;; \newlist{<name>}{<type>}{<max-depth>}
-    '("newlist"
-      (TeX-arg-eval
-       (lambda ()
-	 (let ((name (TeX-read-string "Name: "))
-	       (type (completing-read
-		      "Type: "
-		      '(("itemize")  ("enumerate")  ("description")
-			("itemize*") ("enumerate*") ("description*"))))
-	       (depth (TeX-read-string "Max-depth: ")))
-	   (setq LaTeX-enumitem-newlist-list-local
-		 (append `(,(list name)) LaTeX-enumitem-newlist-list-local))
-	   (when (or (string-equal type "description")
-		     (string-equal type "description*"))
-	     (add-to-list 'LaTeX-item-list `(,name . LaTeX-item-argument)))
-	   (LaTeX-add-environments `(,name LaTeX-enumitem-env-with-opts))
-	   (LaTeX-add-enumitem-newlists (list name type))
-	   (TeX-ispell-skip-setcdr `((,name ispell-tex-arg-end 0)))
-	   (TeX-argument-insert name optional)
-	   (TeX-argument-insert type optional)
-	   (format "%s" depth)))))
+    `("newlist"
+      ,(lambda (optional)
+         (let ((name (TeX-read-string
+                      (TeX-argument-prompt optional nil "Name"))))
+           (LaTeX-add-environments
+            `(,name LaTeX-env-item-args
+                    [TeX-arg-key-val (LaTeX-enumitem-key-val-options)]))
+           (TeX-ispell-skip-setcdr `((,name ispell-tex-arg-end 0)))
+           (TeX-argument-insert name optional)))
+      (TeX-arg-completing-read ,(lambda ()
+                                  (mapcar #'cadr
+                                          (LaTeX-enumitem-newlist-list)))
+                               "Type")
+      "Max-depth"
+      ,(lambda (_optional)
+         (save-excursion
+           (re-search-backward "\\\\newlist{\\([^}]+\\)}{\\([^}]+\\)}"
+                               (line-beginning-position) t))
+         (let ((name (match-string-no-properties 1))
+               (type (match-string-no-properties 2)))
+           (when (member type '("description" "description*"))
+             (add-to-list 'LaTeX-item-list `(,name . LaTeX-item-argument)))
+           (LaTeX-add-enumitem-newlists (list name type)))))
 
     ;; \renewlist{<name>}{<type>}{<max-depth>}
-    '("renewlist"
-      (TeX-arg-eval completing-read "Name: "
-		    LaTeX-enumitem-newlist-list-local)
-      (TeX-arg-eval completing-read "Type: "
-		    '(("itemize")  ("enumerate")  ("description")
-		      ("itemize*") ("enumerate*") ("description*")))
+    `("renewlist"
+      (TeX-arg-completing-read (LaTeX-enumitem-newlist-list) "Name")
+      (TeX-arg-completing-read ,(lambda ()
+                                  (mapcar #'cadr (LaTeX-enumitem-newlist-list)))
+                               "Type")
       "Max-depth")
 
-    ;; \setlist[<names,levels>]{<key-vals>}
-    '("setlist"
-      [TeX-arg-eval mapconcat #'identity
-		    (TeX-completing-read-multiple
-		     (TeX-argument-prompt optional nil "Environment(s), level(s)")
-		     (append
-		      (when (LaTeX-provided-package-options-member "enumitem"
-								   "includedisplayed")
-			'("trivlist"))
-		      LaTeX-enumitem-newlist-list-local
-		      '(("1") ("2") ("3") ("4")))) ","]
-      (TeX-arg-eval
-       (lambda ()
-	 (LaTeX-enumitem-update-key-val-options)
-	 (let ((opts (TeX-read-key-val nil LaTeX-enumitem-key-val-options-local)))
-	   (format "%s" opts)))))
+    ;; \setlist<size>[<names,levels>]{<key-vals>}
+    `("setlist"
+      (TeX-arg-conditional (LaTeX-provided-package-options-member "enumitem" "sizes")
+          ([TeX-arg-completing-read
+            ,(lambda ()
+               (let ((sizes '("script" "tiny" "footnote" "small" "normal"
+                              "large" "Large" "LARGE" "huge" "Huge")))
+                 (append (mapcar (lambda (x) (concat "-" x)) sizes)
+                         (mapcar (lambda (x) (concat x "-")) sizes)
+                         sizes)))
+            "Size qualifier" nil nil "<" ">"])
+        ())
+      [TeX-arg-completing-read-multiple
+       ,(lambda ()
+          (append (when (LaTeX-provided-package-options-member
+                         "enumitem" "includedisplayed")
+                    '("trivlist"))
+                  (mapcar #'car (LaTeX-enumitem-newlist-list))
+                  '("1" "2" "3" "4")))
+       "Environment(s), level(s)"]
+      (TeX-arg-key-val (LaTeX-enumitem-key-val-options)))
 
     ;; \setlist*[<names,levels>]{<key-vals>}
-    '("setlist*"
-      [TeX-arg-eval mapconcat #'identity
-		    (TeX-completing-read-multiple
-		     (TeX-argument-prompt optional nil "Environment(s), level(s)")
-		     (append
-		      (when (LaTeX-provided-package-options-member "enumitem"
-								   "includedisplayed")
-			'("trivlist"))
-		      LaTeX-enumitem-newlist-list-local
-		      '(("1") ("2") ("3") ("4")))) ","]
-      (TeX-arg-eval
-       (lambda ()
-	 (LaTeX-enumitem-update-key-val-options)
-	 (let ((opts (TeX-read-key-val nil LaTeX-enumitem-key-val-options-local)))
-	   (format "%s" opts))))) )
+    `("setlist*"
+      [TeX-arg-completing-read-multiple
+       ,(lambda () (append
+                    (when (LaTeX-provided-package-options-member "enumitem"
+                                                                 "includedisplayed")
+                      '("trivlist"))
+                    (mapcar #'car (LaTeX-enumitem-newlist-list))
+                    '("1" "2" "3" "4")))
+       "Environment(s), level(s)"]
+      (TeX-arg-key-val (LaTeX-enumitem-key-val-options))) )
 
    ;; General commands:
    (TeX-add-symbols
@@ -445,28 +394,40 @@ in `enumitem'-completions."
     ;; We will not extract that information and leave that to users.
     ;; For completion, extract enumerated environments from
     ;; `LaTeX-enumitem-newlist-list' and add "enumerate" to them.
-    '("restartlist"
-      (TeX-arg-eval
-       (lambda ()
-	 (let ((enums '("enumerate")))
-	   (when (LaTeX-provided-package-options-member "enumitem" "inline")
-	     (cl-pushnew "enumerate*" enums :test #'equal))
-	   (dolist (env-type (LaTeX-enumitem-newlist-list))
-	     (let ((env   (car env-type))
-		   (type  (cadr env-type)))
-	       (when (or (string-equal type "enumerate")
-			 (string-equal type "enumerate*"))
-		 (cl-pushnew env enums :test #'equal))))
-	   (completing-read "List name: " enums)))))
+    `("restartlist"
+      (TeX-arg-completing-read
+       ,(lambda ()
+          (let ((enums '("enumerate")))
+            (when (LaTeX-provided-package-options-member "enumitem" "inline")
+              (push "enumerate*" enums))
+            (dolist (env-type (LaTeX-enumitem-newlist-list))
+              (let ((env   (car env-type))
+                    (type  (cadr env-type)))
+                (when (member type '("enumerate" "enumerate*"))
+                  (push env enums))))
+            enums))
+       "List name"))
 
     ;; "Align" is added as new value to "align" key in key-val list.
-    '("SetLabelAlign" LaTeX-arg-SetLabelAlign t)
+    '("SetLabelAlign" LaTeX-arg-enumitem-SetLabelAlign t)
 
     ;; "Key" will be parsed and added to key-val list.
-    '("SetEnumitemKey" LaTeX-arg-SetEnumitemKey)
+    '("SetEnumitemKey"
+      LaTeX-arg-enumitem-SetEnumitemKey
+      (TeX-arg-key-val (LaTeX-enumitem-key-val-options) "Replacement"))
 
     ;; "Key" and "Value" are added to our key-val list.
-    '("SetEnumitemValue" LaTeX-arg-SetEnumitemValue "Replacement")
+    `("SetEnumitemValue"
+      (TeX-arg-completing-read LaTeX-enumitem-key-val-options "Key")
+      LaTeX-arg-enumitem-SetEnumitemValue
+      (TeX-arg-completing-read
+       ,(lambda ()
+          (save-excursion
+            (re-search-backward "\\\\SetEnumitemValue{\\([^}]+\\)}"
+                                (line-beginning-position) t)
+            (cadr (assoc (match-string-no-properties 1)
+                         LaTeX-enumitem-key-val-options))))
+       "Replacement"))
 
     ;; v3.6 has a macro for visual debugging.
     '("DrawEnumitemLabel" 0))
@@ -475,29 +436,36 @@ in `enumitem'-completions."
    (when (LaTeX-provided-package-options-member "enumitem" "shortlabels")
      (TeX-add-symbols
       '("SetEnumerateShortLabel"
-	(TeX-arg-eval completing-read "Key: "
-		      '(("A") ("a") ("I") ("i") ("1")))
-	"Replacement")))
+        (TeX-arg-completing-read ("A" "a" "I" "i" "1") "Key")
+        "Replacement")))
 
    ;; Add \labelindent to list of known lengths:
-   (LaTeX-add-lengths "labelitem")
+   (LaTeX-add-lengths "labelindent")
 
    ;; Fontification
    (when (and (featurep 'font-latex)
-	      (eq TeX-install-font-lock 'font-latex-setup))
+              (eq TeX-install-font-lock 'font-latex-setup))
      (font-latex-add-keywords '(("newlist"             "{{{")
-				("renewlist"           "{{{")
-				("setlist"             "*[{")
-				("AddEnumerateCounter" "*{{{")
-				("SetLabelAlign"       "{{")
-				("SetEnumitemKey"      "{{" )
-				("SetEnumitemValue"    "{{{"))
-			      'function)
+                                ("renewlist"           "{{{")
+                                ("SetEnumitemSize"     "{{")
+                                ("AddEnumerateCounter" "*{{{")
+                                ("SetLabelAlign"       "{{")
+                                ("SetEnumitemKey"      "{{" )
+                                ("SetEnumitemValue"    "{{{"))
+                              'function)
+     ;; Cater for additional optionals arg <size> based on package
+     ;; option 'sizes':
+     (font-latex-add-keywords
+      (if (LaTeX-provided-package-options-member "enumitem" "sizes")
+          '(("setlist" "*<[{"))
+        '(("setlist" "*[{")))
+      'function)
+
      (font-latex-add-keywords '(("restartlist"            "{" )
-				("setlistdepth"           "{" )
-				("SetEnumerateShortLabel" "{{"))
-			      'variable)))
- LaTeX-dialect)
+                                ("setlistdepth"           "{" )
+                                ("SetEnumerateShortLabel" "{{"))
+                              'variable)))
+ TeX-dialect)
 
 (defvar LaTeX-enumitem-package-options
   '("inline" "shortlabels" "loadonly" "sizes"

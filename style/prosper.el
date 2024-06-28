@@ -1,6 +1,6 @@
-;;; prosper.el --- Prosper style file for AUCTeX
+;;; prosper.el --- Prosper style file for AUCTeX  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2001, 2002, 2014  Free Software Foundation, Inc.
+;; Copyright (C) 2001-2021  Free Software Foundation, Inc.
 
 ;; Authors:  Phillip Lord<p.lord@russet.org.uk>
 ;;           Nevin Kapur <nevin@jhu.edu>
@@ -59,18 +59,19 @@
 ;; auctex. I shall have to download the latest version, and see if
 ;; its already been fixed.
 
-
+(require 'tex)
+(require 'latex)
 
 (defconst LaTeX-prosper-version "2008-05-25"
   "prosper.el version.")
 
 (defconst LaTeX-prosper-transition-styles '("Split"
-					  "Blinds"
-					  "Box"
-					  "Wipe"
-					  "Dissolve"
-					  "Glitter"
-					  "Replace")
+                                          "Blinds"
+                                          "Box"
+                                          "Wipe"
+                                          "Dissolve"
+                                          "Glitter"
+                                          "Replace")
   "List of transition styles provided by prosper.")
 
 (defconst LaTeX-prosper-slide-styles
@@ -83,10 +84,10 @@
 (defun LaTeX-prosper-insert-title (_optional)
   (newline)
   (mapc (lambda(f)
-	  (TeX-insert-macro f)
-	  (newline))
-	'("title" "subtitle" "author" "email" "institution" "slideCaption"
-	  "Logo" "DefaultTransition"))
+          (TeX-insert-macro f)
+          (newline))
+        '("title" "subtitle" "author" "email" "institution" "slideCaption"
+          "Logo" "DefaultTransition"))
   (LaTeX-insert-environment "document")
   (TeX-insert-macro "maketitle"))
 
@@ -102,7 +103,7 @@
       (TeX-argument-prompt nil
                            (format "Transition (Default %s) " default)
                            t)
-      (mapcar 'list LaTeX-prosper-transition-styles)
+      (mapcar #'list LaTeX-prosper-transition-styles)
       nil
       t
       nil
@@ -113,7 +114,7 @@
 (defun LaTeX-prosper-slide-style-prompt()
   (completing-read
    "Slide Style?"
-   (mapcar 'list LaTeX-prosper-slide-styles)
+   LaTeX-prosper-slide-styles
    nil nil nil nil "default" ))
 
 
@@ -121,18 +122,18 @@
   (insert "[" )
   (insert (LaTeX-prosper-slide-style-prompt) " ")
   (mapc (lambda(f)
-	  (if (y-or-n-p (car f))
-	      (insert (car (cdr f)) " ")))
-	'(("Draft?" "draft")
-	  ("Color Slides?" "slideColor")
-	  ("Disable running total on each slide?" "nototal")
-	  ("Is the final version going to be PDF?" "pdf")
-	  ("Are you going to use Adobe Distiller" "distiller")))
+          (if (y-or-n-p (car f))
+              (insert (car (cdr f)) " ")))
+        '(("Draft?" "draft")
+          ("Color Slides?" "slideColor")
+          ("Disable running total on each slide?" "nototal")
+          ("Is the final version going to be PDF?" "pdf")
+          ("Are you going to use Adobe Distiller" "distiller")))
   (delete-char -1)
   (insert "]"))
 
 (defun LaTeX-prosper-insert-slide (_environment)
-  (if (y-or-n-p "Surround with overlay ?")
+  (if (y-or-n-p "Surround with overlay? ")
       (progn (TeX-insert-macro "overlays")
              (if (search-backward "{" 0 t)
                  (progn
@@ -141,52 +142,49 @@
   (let ((title (TeX-read-string "Title: ")))
     (LaTeX-insert-environment "slide" (concat TeX-grop title TeX-grcl))))
 
-
-
 ;; AUCTeX configuration
-(TeX-add-style-hook "prosper"
-		    (function
-		     (lambda ()
-		       (LaTeX-add-environments
-			'("slide" LaTeX-prosper-insert-slide)
-			'("itemstep" LaTeX-env-item)
-			'("Itemize" LaTeX-env-item))
-                       (TeX-add-symbols
-                        '("documentclass"
-                          LaTeX-prosper-insert-options
-                          LaTeX-prosper-insert-title)
-                        '("title" "Title of the presentation")
-			'("subtitle" "Subtitle of the presentation")
-			'("author" "Author name")
-			'("email" "Author email")
-			'("institution" "Author institution")
-			'("slideCaption" "Caption for slide")
-			'("Logo" "Logo")
-			'("displayVersion" TeX-arg-free)
-			'("DefaultTransition"
-			  LaTeX-prosper-arg-pdftransition)
-			'("NoFrenchBabelItemize" TeX-arg-free)
-			'("part" LaTeX-prosper-arg-part)
-			'("overlays" "Number of overlays" t)
-			'("FontTitle" "Color slides" "Black & White Slides")
-			'("FontText" "Color slides" "Black & White Slides")
-			'("fontTitle" "Text")
-			'("fontText" "Text")
-			'("ColorFoot" "Color")
-			'("PDFtransition" LaTeX-prosper-arg-pdftransition)
-			'("myitem" "Level" "Definition")
-			'("fromSlide" "Number" t)
-			'("fromSlide*" "Number" t)
-			'("onlySlide" "Number" t)
-			'("onlySlide*" "Number" t)
-			'("OnlySlide" "Number")
-			'("UntilSlide" "Number")
-			'("untilSlide*" "Number")
-			'("PDForPS" TeX-arg-conditional)
-			'("onlyInPS" t)
-			'("onlyInPDF" t)
-			'("FromSlide" "Number"))))
-		    LaTeX-dialect)
-
+(TeX-add-style-hook
+ "prosper"
+ (lambda ()
+   (LaTeX-add-environments
+    '("slide" LaTeX-prosper-insert-slide)
+    '("itemstep" LaTeX-env-item)
+    '("Itemize" LaTeX-env-item))
+   (TeX-add-symbols
+    '("documentclass"
+      LaTeX-prosper-insert-options
+      LaTeX-prosper-insert-title)
+    '("title" "Title of the presentation")
+    '("subtitle" "Subtitle of the presentation")
+    '("author" "Author name")
+    '("email" "Author email")
+    '("institution" "Author institution")
+    '("slideCaption" "Caption for slide")
+    '("Logo" "Logo")
+    '("displayVersion" TeX-arg-free)
+    '("DefaultTransition"
+      LaTeX-prosper-arg-pdftransition)
+    '("NoFrenchBabelItemize" TeX-arg-free)
+    '("part" LaTeX-prosper-arg-part)
+    '("overlays" "Number of overlays" t)
+    '("FontTitle" "Color slides" "Black & White Slides")
+    '("FontText" "Color slides" "Black & White Slides")
+    '("fontTitle" "Text")
+    '("fontText" "Text")
+    '("ColorFoot" "Color")
+    '("PDFtransition" LaTeX-prosper-arg-pdftransition)
+    '("myitem" "Level" "Definition")
+    '("fromSlide" "Number" t)
+    '("fromSlide*" "Number" t)
+    '("onlySlide" "Number" t)
+    '("onlySlide*" "Number" t)
+    '("OnlySlide" "Number")
+    '("UntilSlide" "Number")
+    '("untilSlide*" "Number")
+    '("PDForPS" TeX-arg-conditional)
+    '("onlyInPS" t)
+    '("onlyInPDF" t)
+    '("FromSlide" "Number")))
+ TeX-dialect)
 
 ;;; prosper.el ends here

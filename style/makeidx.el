@@ -1,6 +1,6 @@
-;;; makeidx.el --- AUCTeX support for makeidx.sty
+;;; makeidx.el --- AUCTeX support for makeidx.sty  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 1999 Free Software Foundation, Inc.
+;; Copyright (C) 1999, 2020, 2022 Free Software Foundation, Inc.
 
 ;; Author: Carsten Dominik <dominik@strw.leidenuniv.nl>
 ;; Maintainer: auctex-devel@gnu.org
@@ -24,24 +24,38 @@
 
 ;;; Code:
 
-(TeX-add-style-hook "makeidx"
-  (lambda ()
-    (TeX-add-symbols 
-     "printindex" "indexspace")
+;; Silence the compiler:
+(declare-function font-latex-add-keywords
+                  "font-latex"
+                  (keywords class))
 
-    ;; Parsing the default index macro is defined in latex.el
-    ;; The same is true form completion in the index macro
+(require 'tex)
 
-    ;; Completion for the |see macro
-    (setq TeX-complete-list
-	  (append
-	   '(("|see{\\([^{}\n\r]*\\)" 1 LaTeX-index-entry-list))
-	   TeX-complete-list))
+(TeX-add-style-hook
+ "makeidx"
+ (lambda ()
+   (TeX-add-symbols
+    "printindex")
 
-    ;; RefTeX support
-    (and (fboundp 'reftex-add-index-macros)
-	 (reftex-add-index-macros '(default))))
-  LaTeX-dialect)
+   ;; Parsing the default index macro is defined in latex.el
+   ;; The same is true form completion in the index macro
+
+   ;; Completion for the |see macro
+   (setq TeX-complete-list
+         (append
+          '(("|see{\\([^{}\n\r]*\\)" 1 LaTeX-index-entry-list))
+          TeX-complete-list))
+
+   ;; RefTeX support
+   (and (fboundp 'reftex-add-index-macros)
+        (reftex-add-index-macros '(default)))
+
+   ;; Fontification
+   (when (and (featurep 'font-latex)
+              (eq TeX-install-font-lock 'font-latex-setup))
+     (font-latex-add-keywords '(("printindex" ""))
+                              'function)))
+ TeX-dialect)
 
 (defvar LaTeX-makeidx-package-options nil
   "Package options for the makeidx package.")

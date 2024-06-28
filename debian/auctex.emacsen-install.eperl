@@ -75,6 +75,7 @@ do_install () {
     cat <<EOF >${INITFILE}
 (push "." load-path)
 (setq byte-compile-warnings nil
+      byte-compile-verbose t
       TeX-lisp-directory "<none>"
       TeX-auto-global "<none>")
 EOF

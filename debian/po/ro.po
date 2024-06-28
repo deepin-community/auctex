@@ -1,0 +1,94 @@
+# Mesajele în limba română pentru pachetul auctex.
+# Romanian translation of auctex.
+# Copyright © 2023 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the auctex package.
+#
+# Remus-Gabriel Chelu <remusgabriel.chelu@disroot.org>, 2023.
+#
+# Cronologia traducerii fișierului „auctex”:
+# Traducerea inițială, făcută de R-GC, pentru versiunea auctex 12.2-1.
+# Actualizare a traducerii pentru versiunea Y, făcută de X, Y(anul).
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: auctex 12.2-1\n"
+"Report-Msgid-Bugs-To: auctex@packages.debian.org\n"
+"POT-Creation-Date: 2012-01-02 02:04+0100\n"
+"PO-Revision-Date: 2023-02-07 23:09+0100\n"
+"Last-Translator: Remus-Gabriel Chelu <remusgabriel.chelu@disroot.org>\n"
+"Language-Team: \n"
+"Language: ro\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n==0 || (n!=1 && n%100>=1 && "
+"n%100<=19) ? 1 : 2);\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
+"X-Generator: Poedit 3.2.2\n"
+
+#. Type: select
+#. Choices
+#: ../auctex.templates:1001
+msgid "Background"
+msgstr "Fundal"
+
+#. Type: select
+#. Choices
+#: ../auctex.templates:1001
+msgid "Foreground"
+msgstr "Primplan"
+
+#. Type: select
+#. Choices
+#: ../auctex.templates:1001
+msgid "None"
+msgstr "Niciunul"
+
+#. Type: select
+#. Description
+#: ../auctex.templates:1002
+msgid "(La)TeX macros parsing mode:"
+msgstr "Modul de analizare a macrocomenzilor (La)TeX:"
+
+#. Type: select
+#. Description
+#: ../auctex.templates:1002
+msgid ""
+"To improve the performance of AUCTeX, every currently installed TeX macro "
+"package and LaTeX style file will be parsed."
+msgstr ""
+"Pentru a îmbunătăți performanța AUCTeX, fiecare pachet macro TeX instalat în "
+"prezent ș fiecare fișier de stil LaTeX vor fi analizate."
+
+#. Type: select
+#. Description
+#. Translators: do NOT translate ${LOGFILE}
+#: ../auctex.templates:1002
+msgid ""
+"This may take a lot of time, so it should probably be done in the background.  "
+"You may also choose to have it done in the foreground, or to skip that step."
+msgstr ""
+"Acest lucru poate dura mult timp, așa că probabil ar trebui făcut în fundal. De "
+"asemenea, puteți alege să faceți acest lucru în primplan sau să săriți peste "
+"acest pas."
+
+#. Type: select
+#. Description
+#: ../auctex.templates:1002
+msgid ""
+"The cached data gets automatically updated via dpkg triggers, so that no "
+"specific action is required whenever you install new (La)TeX packages or remove "
+"old ones."
+msgstr ""
+"Datele din cache sunt actualizate automat prin intermediul declanșatorilor "
+"«dpkg», astfel încât să nu fie necesară nicio acțiune specifică ori de câte ori "
+"instalați pachete (La)TeX noi sau eliminați pe cele vechi."
+
+#. Type: select
+#. Description
+#: ../auctex.templates:1002
+msgid ""
+"This update can be run manually at any moment by running 'update-auctex-elisp'."
+msgstr ""
+"Această actualizare poate fi executată manual în orice moment, rulând comanda "
+"«update-auctex-elisp»."

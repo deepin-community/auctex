@@ -1,6 +1,6 @@
-;;; tex-ispell.el --- AUCTeX skip additions for Ispell
+;;; tex-ispell.el --- AUCTeX skip additions for Ispell  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2016--2018 Free Software Foundation, Inc.
+;; Copyright (C) 2016-2023 Free Software Foundation, Inc.
 
 ;; Author: Arash Esbati <arash@gnu.org>
 ;; Maintainer: auctex-devel@gnu.org
@@ -45,6 +45,7 @@
 ;; attachfile.sty
 ;; booktabs.sty
 ;; breqn.sty
+;; caption.sty
 ;; cleveref.sty
 ;; empheq.sty
 ;; enumitem.sty
@@ -55,13 +56,16 @@
 ;; fontspec.sty
 ;; hyperref.sty
 ;; listings.sty
+;; ltxdoc.cls
 ;; ltxtable.sty
 ;; mdframed.sty
 ;; minted.sty
 ;; nameref.sty
 ;; pythontex.sty
+;; shortvrb.sty
 ;; siunitx.sty
 ;; splitidx.sty
+;; stabular.sty
 ;; tabularx.sty
 ;; tabulary.sty
 ;; tcolorbox.sty
@@ -132,6 +136,14 @@
       ;; booktabs.sty
       ("addlinespace" . 0)
       ("specialrule" . 3)
+      ;; caption.sty
+      ("captionlistentry" . 0)
+      ("captionof" . 1)
+      ("captionof*" . 1)
+      ("captionsetup" . 1)
+      ("captionsetup*" . 1)
+      ("clearcaptionsetup" . 1)
+      ("clearcaptionsetup*" . 1)
       ;; cleveref.sty
       ("cref" . 1)
       ("Cref" . 1)
@@ -156,6 +168,14 @@
       ("Fref" . 1)
       ;; fancyvrb.sty
       ("fvset" . 1)
+      ("UseVerb" . 1)
+      ("UseVerb*" . 1)
+      ("UseVerbatim" . 1)
+      ("UseVerbatim*" . 1)
+      ("BUseVerbatim" . 1)
+      ("BUseVerbatim*" . 1)
+      ("LUseVerbatim" . 1)
+      ("LUseVerbatim*" . 1)
       ("VerbatimInput" . 1)
       ;; fontaxes.sty
       ("figureversion" . 1)
@@ -179,6 +199,8 @@
       ;; listings.sty
       ("lstinputlisting" . 1)
       ("lstset" . 1)
+      ;; ltxdoc.cls
+      ("cs" . 1)
       ;; ltxtable.sty
       ("LTXtable" . 2)
       ;; mdframed.sty
@@ -199,6 +221,10 @@
       ("inputpygments" . 1)
       ("setpygmentsfv" . 1)
       ("setpygmentspygopt" . 1)
+      ;; shortvrb.sty
+      ("MakeShortVerb" . 1)
+      ("MakeShortVerb*" . 1)
+      ("DeleteShortVerb" . 1)
       ;; siunitx.sty
       ("num" . 1)
       ("si" . 1)
@@ -325,6 +351,8 @@ Environments for math or verbatim text are candidates for this list."))
    ("\\\\raisebox" TeX-ispell-tex-arg-end 1 2 0)
    ;; booktabs.sty
    ("\\\\cmidrule" . "{[-0-9]+}")
+   ;; fancyvrb.sty
+   ("\\\\SaveVerb" TeX-ispell-tex-arg-verb-end 1)
    ;; fontspec.sty
    ("\\\\fontspec" TeX-ispell-tex-arg-end 1 1 0)))
 
@@ -343,12 +371,12 @@ not be quoted.  An opening brace `{', asterisk `*' and at-sign
 ;; before verb content:
 (TeX-ispell-skip-setcar
  `((,(concat "\\\\" (regexp-opt '("Verb"     "lstinline"
-				  "py"       "pyc"       "pys"    "pyv" "pyb"
-				  "pycon"    "pyconc"    "pyconv"
-				  "pylab"    "pylabc"    "pylabs" "pylabv" "pylabb"
-				  "pylabcon" "pylabconc" "pylabconv"
-				  "sympy"    "sympyc"    "sympys" "sympyv" "sympyb"
-				  "sympycon" "sympyconc" "sympyconv")))
+                                  "py"       "pyc"       "pys"    "pyv" "pyb"
+                                  "pycon"    "pyconc"    "pyconv"
+                                  "pylab"    "pylabc"    "pylabs" "pylabv" "pylabb"
+                                  "pylabcon" "pylabconc" "pylabconv"
+                                  "sympy"    "sympyc"    "sympys" "sympyv" "sympyb"
+                                  "sympycon" "sympyconc" "sympyconv")))
     TeX-ispell-tex-arg-verb-end)))
 
 ;; minted.sty: With opt. and mandatory argument before verb content.
@@ -362,6 +390,9 @@ not be quoted.  An opening brace `{', asterisk `*' and at-sign
 (TeX-ispell-skip-setcdr
  '(;; filecontents.sty
    ("filecontents\\*?" ispell-tex-arg-end)
+   ;; stabular.sty
+   ("stabular" ispell-tex-arg-end)
+   ("stabular\\*" TeX-ispell-tex-arg-end)
    ;; tabularx.sty, tabulary.sty, Standard LaTeX tabular*-env
    ("tabular[*xy]" TeX-ispell-tex-arg-end)
    ;; tcolorbox.sty -- raster library
@@ -377,33 +408,33 @@ not be quoted.  An opening brace `{', asterisk `*' and at-sign
     "Return elements from `TeX-ispell-skip-cmds-list' acc. to ARG."
     (when (member arg '(0 1 2 3))
       (let (cmds)
-	(dolist (elt TeX-ispell-skip-cmds-list)
-	  (when (= (cdr elt) arg)
-	    (push (car elt) cmds)))
-	cmds))))
+        (dolist (elt TeX-ispell-skip-cmds-list)
+          (when (= (cdr elt) arg)
+            (push (car elt) cmds)))
+        cmds))))
 
 (defvar TeX-ispell-skip-cmds-opt-arg-regexp
   (eval-when-compile
     (concat "\\\\"
-	    (regexp-opt (TeX-ispell-sort-skip-cmds-list 0) t)))
+            (regexp-opt (TeX-ispell-sort-skip-cmds-list 0) t)))
   "Regexp of LaTeX commands with only optional arguments to be skipped.")
 
 (defvar TeX-ispell-skip-cmds-one-arg-regexp
   (eval-when-compile
     (concat "\\\\"
-	    (regexp-opt (TeX-ispell-sort-skip-cmds-list 1) t)))
+            (regexp-opt (TeX-ispell-sort-skip-cmds-list 1) t)))
   "Regexp of LaTeX commands with one argument to be skipped.")
 
 (defvar TeX-ispell-skip-cmds-two-args-regexp
   (eval-when-compile
     (concat "\\\\"
-	    (regexp-opt (TeX-ispell-sort-skip-cmds-list 2) t)))
+            (regexp-opt (TeX-ispell-sort-skip-cmds-list 2) t)))
   "Regexp of LaTeX commands with two arguments to be skipped.")
 
 (defvar TeX-ispell-skip-cmds-three-args-regexp
   (eval-when-compile
     (concat "\\\\"
-	    (regexp-opt (TeX-ispell-sort-skip-cmds-list 3) t)))
+            (regexp-opt (TeX-ispell-sort-skip-cmds-list 3) t)))
   "Regexp of LaTeX commands with three arguments to be skipped.")
 
 (defvar TeX-ispell-skip-envs-opt-arg-regexp
@@ -426,7 +457,7 @@ not be quoted.  An opening brace `{', asterisk `*' and at-sign
 (TeX-ispell-skip-setcdr
  `((,TeX-ispell-skip-envs-opt-arg-regexp ispell-tex-arg-end 0)
    ,(cons TeX-ispell-skip-envs-regexp
-	  (concat "\\\\end{" TeX-ispell-skip-envs-regexp "}"))))
+          (concat "\\\\end{" TeX-ispell-skip-envs-regexp "}"))))
 
 (provide 'tex-ispell)
 
